@@ -35,5 +35,6 @@
     "log_flushes": true,
     "slots_enabled": true,
 
-    "addr": ":34000"
+    "addr": ":34000",
+    "redis_addr": ":6379"
 }

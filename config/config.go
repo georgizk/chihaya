@@ -76,6 +76,7 @@ type TrackerConfig struct {
 	LogFlushes   bool                    `json:"log_flushes"`
 	SlotsEnabled bool                    `json:"slots_enabled"`
 	BindAddress  string                  `json:"addr"`
+	RedisAddress string                  `json:"redis_addr"`
 
 	// When true disregards download. This value is loaded from the database.
 	GlobalFreeleech bool `json:"global_freeleach"`

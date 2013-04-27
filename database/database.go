@@ -124,6 +124,7 @@ func (db *Database) Init() {
 	db.startReloading()
 	db.startSerializing()
 	db.startFlushing()
+	db.subscribe()
 }
 
 func (db *Database) Terminate() {
