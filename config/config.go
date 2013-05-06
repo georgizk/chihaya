@@ -12,9 +12,6 @@ import (
 	"time"
 )
 
-
-const ConfigFileName = "$GOPATH/src/github.com/kotokoko/chihaya/config.json"
-
 var Loaded TrackerConfig
 
 type TrackerDuration struct {
@@ -85,10 +82,10 @@ type TrackerConfig struct {
 	MaxDeadlockRetries int `json:"max_deadlock_retries"`
 }
 
-// ReloadConfig loads the config file from the CWD.
-func ReloadConfig() (err error) {
-	expandedFileName := os.ExpandEnv(ConfigFileName)
-	f, err := os.Open(expandedFileName)
+// LoadConfig loads the config file from the given path
+func LoadConfig(path string) (err error) {
+	expandedPath := os.ExpandEnv(path)
+	f, err := os.Open(expandedPath)
 	if err != nil {
 		return
 	}
@@ -98,12 +95,56 @@ func ReloadConfig() (err error) {
 	if err != nil {
 		return
 	}
+	log.Printf("Successfully loaded config file.")
 	return
 }
 
+// Default TrackerConfig
 func init() {
-	err := ReloadConfig()
-	if err != nil {
-		log.Fatalf(err.Error())
+	Loaded = TrackerConfig{
+		Database: TrackerDatabase{
+			Username: "root",
+			Password: "",
+			Database: "sample_database",
+			Proto:    "tcp",
+			Addr:     "127.0.0.1:3306",
+			Encoding: "utf8",
+		},
+		Intervals: TrackerIntervals{
+			Announce: TrackerDuration{
+				30 * time.Minute,
+			},
+			MinAnnounce: TrackerDuration{
+				15 * time.Minute,
+			},
+			DatabaseReload: TrackerDuration{
+				45 * time.Second,
+			},
+			DatabaseSerialization: TrackerDuration{
+				time.Minute,
+			},
+			PurgeInactive: TrackerDuration{
+				time.Minute,
+			},
+			VerifyUsedSlots: 3600,
+			FlushSleep: TrackerDuration{
+				3 * time.Second,
+			},
+			DeadlockWait: TrackerDuration{
+				time.Second,
+			},
+		},
+		FlushSizes: TrackerFlushBufferSizes{
+			Torrent:         10000,
+			User:            10000,
+			TransferHistory: 10000,
+			TransferIps:     1000,
+			Snatch:          100,
+		},
+		LogFlushes:         true,
+		SlotsEnabled:       true,
+		BindAddress:        ":34000",
+		GlobalFreeleech:    false,
+		MaxDeadlockRetries: 10,
 	}
 }

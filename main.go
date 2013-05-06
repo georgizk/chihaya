@@ -12,18 +12,30 @@ import (
 	"runtime"
 	"runtime/pprof"
 
+	"github.com/kotokoko/chihaya/config"
 	"github.com/kotokoko/chihaya/server"
 )
 
-var profile bool
+var (
+	profile    bool
+	configFile string
+)
 
 func init() {
 	flag.BoolVar(&profile, "profile", false, "Generate profiling data for pprof into chihaya.cpu")
+	flag.StringVar(&configFile, "config", "", "The location of a valid configuration file.")
 }
 
 func main() {
 	flag.Parse()
 	runtime.GOMAXPROCS(runtime.NumCPU())
+
+	if configFile != "" {
+		err := config.LoadConfig(configFile)
+		if err != nil {
+			log.Fatalf("Failed to load configuration file")
+		}
+	}
 
 	if profile {
 		log.Println("Running with profiling enabled")
