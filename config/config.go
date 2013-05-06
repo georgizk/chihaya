@@ -12,8 +12,6 @@ import (
 	"time"
 )
 
-var Loaded TrackerConfig
-
 type TrackerDuration struct {
 	time.Duration
 }
@@ -100,37 +98,35 @@ func LoadConfig(path string) (err error) {
 }
 
 // Default TrackerConfig
-func init() {
-	Loaded = TrackerConfig{
-		Database: TrackerDatabase{
-			Username: "root",
-			Password: "",
-			Database: "sample_database",
-			Proto:    "tcp",
-			Addr:     "127.0.0.1:3306",
-			Encoding: "utf8",
-		},
-		Intervals: TrackerIntervals{
-			Announce:              TrackerDuration{30 * time.Minute},
-			MinAnnounce:           TrackerDuration{15 * time.Minute},
-			DatabaseReload:        TrackerDuration{45 * time.Second},
-			DatabaseSerialization: TrackerDuration{time.Minute},
-			PurgeInactive:         TrackerDuration{time.Minute},
-			VerifyUsedSlots:       3600,
-			FlushSleep:            TrackerDuration{3 * time.Second},
-			DeadlockWait:          TrackerDuration{time.Second},
-		},
-		FlushSizes: TrackerFlushBufferSizes{
-			Torrent:         10000,
-			User:            10000,
-			TransferHistory: 10000,
-			TransferIps:     1000,
-			Snatch:          100,
-		},
-		LogFlushes:         true,
-		SlotsEnabled:       true,
-		BindAddress:        ":34000",
-		GlobalFreeleech:    false,
-		MaxDeadlockRetries: 10,
-	}
+var Loaded = TrackerConfig{
+	Database: TrackerDatabase{
+		Username: "root",
+		Password: "",
+		Database: "sample_database",
+		Proto:    "tcp",
+		Addr:     "127.0.0.1:3306",
+		Encoding: "utf8",
+	},
+	Intervals: TrackerIntervals{
+		Announce:              TrackerDuration{30 * time.Minute},
+		MinAnnounce:           TrackerDuration{15 * time.Minute},
+		DatabaseReload:        TrackerDuration{45 * time.Second},
+		DatabaseSerialization: TrackerDuration{time.Minute},
+		PurgeInactive:         TrackerDuration{time.Minute},
+		VerifyUsedSlots:       3600,
+		FlushSleep:            TrackerDuration{3 * time.Second},
+		DeadlockWait:          TrackerDuration{time.Second},
+	},
+	FlushSizes: TrackerFlushBufferSizes{
+		Torrent:         10000,
+		User:            10000,
+		TransferHistory: 10000,
+		TransferIps:     1000,
+		Snatch:          100,
+	},
+	LogFlushes:         true,
+	SlotsEnabled:       true,
+	BindAddress:        ":34000",
+	GlobalFreeleech:    false,
+	MaxDeadlockRetries: 10,
 }
