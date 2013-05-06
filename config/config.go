@@ -111,28 +111,14 @@ func init() {
 			Encoding: "utf8",
 		},
 		Intervals: TrackerIntervals{
-			Announce: TrackerDuration{
-				30 * time.Minute,
-			},
-			MinAnnounce: TrackerDuration{
-				15 * time.Minute,
-			},
-			DatabaseReload: TrackerDuration{
-				45 * time.Second,
-			},
-			DatabaseSerialization: TrackerDuration{
-				time.Minute,
-			},
-			PurgeInactive: TrackerDuration{
-				time.Minute,
-			},
-			VerifyUsedSlots: 3600,
-			FlushSleep: TrackerDuration{
-				3 * time.Second,
-			},
-			DeadlockWait: TrackerDuration{
-				time.Second,
-			},
+			Announce:              TrackerDuration{30 * time.Minute},
+			MinAnnounce:           TrackerDuration{15 * time.Minute},
+			DatabaseReload:        TrackerDuration{45 * time.Second},
+			DatabaseSerialization: TrackerDuration{time.Minute},
+			PurgeInactive:         TrackerDuration{time.Minute},
+			VerifyUsedSlots:       3600,
+			FlushSleep:            TrackerDuration{3 * time.Second},
+			DeadlockWait:          TrackerDuration{time.Second},
 		},
 		FlushSizes: TrackerFlushBufferSizes{
 			Torrent:         10000,
