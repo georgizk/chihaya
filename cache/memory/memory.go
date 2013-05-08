@@ -65,7 +65,7 @@ func (ms *MemoryCache) LoadWhitelist(s Storage) (err error) {
 	ms.whitelist = make([]string, 0, 100)
 
 	whitelistMapper := func(p *m.Peer) (err error) {
-		append(ms.whitelist, p.Id)
+		ms.whitelist = append(ms.whitelist, p.Id)
 		return nil
 	}
 	err = s.MapOverWhitelist(whitelistMapper)
