@@ -6,7 +6,9 @@ import (
 )
 
 type Cache interface {
-	Load(s Storage) error
+	LoadUsers(s Storage) error
+	LoadTorrents(s Storage) error
+	LoadWhitelist(s Storage) error
 
 	FindTorrentByInfoHash(infohash string) (*m.Torrent, error)
 	FindUserByPasskey(passkey string) (*m.User, error)

@@ -27,26 +27,7 @@ func New() cache.Cache {
 	}
 }
 
-func (ms *MemoryCache) Load(s Storage) (err error) {
-	err = ms.loadUsers(s)
-	if err != nil {
-		return
-	}
-
-	err = ms.loadTorrents(s)
-	if err != nil {
-		return
-	}
-
-	err = ms.loadWhitelist(s)
-	if err != nil {
-		return
-	}
-
-	return
-}
-
-func (ms *MemoryCache) loadUsers(s Storage) (err error) {
+func (ms *MemoryCache) LoadUsers(s Storage) (err error) {
 	ms.usersM.Lock()
 	defer ms.usersM.Unlock()
 
@@ -62,7 +43,7 @@ func (ms *MemoryCache) loadUsers(s Storage) (err error) {
 	return
 }
 
-func (ms *MemoryCache) loadTorrents(s Storage) (err error) {
+func (ms *MemoryCache) LoadTorrents(s Storage) (err error) {
 	ms.torrentsM.Lock()
 	defer ms.torrentsM.Unlock()
 
@@ -78,7 +59,7 @@ func (ms *MemoryCache) loadTorrents(s Storage) (err error) {
 	return
 }
 
-func (ms *MemoryCache) loadWhitelist(s Storage) (err error) {
+func (ms *MemoryCache) LoadWhitelist(s Storage) (err error) {
 	ms.whitelistM.Lock()
 	defer ms.whitelistM.Unlock()
 	ms.whitelist = make([]string, 0, 100)
