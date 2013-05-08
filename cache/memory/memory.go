@@ -79,14 +79,14 @@ func (ms *MemoryCache) LoadWhitelist(s Storage) (err error) {
 	return
 }
 
-func (ms *MemoryCache) FindTorrent(infoHash string) (*m.Torrent, bool, error) {
-	t, exists := ms.torrents[infoHash]
-	return t, exists, nil
-}
-
 func (ms *MemoryCache) FindUser(passkey string) (*m.User, bool, error) {
 	u, exists := ms.users[passkey]
 	return u, exists, nil
+}
+
+func (ms *MemoryCache) FindTorrent(infoHash string) (*m.Torrent, bool, error) {
+	t, exists := ms.torrents[infoHash]
+	return t, exists, nil
 }
 
 func (ms *MemoryCache) PeerWhitelisted(peerId *m.Peer) (bool, error) {
@@ -111,6 +111,15 @@ func (ms *MemoryCache) PeerWhitelisted(peerId *m.Peer) (bool, error) {
 	return false
 }
 
+func (ms *MemoryCache) SaveUser(u *m.User) error {
+	ms.usersM.Lock()
+	for _, u := range users {
+		ms.users[u.Passkey] = u
+	}
+	ms.usersM.Unlock()
+	return nil
+}
+
 func (ms *MemoryCache) SaveTorrent(t *m.Torrent) error {
 	ms.torrentsM.Lock()
 	ms.torrents[t.InfoHash] = t
@@ -118,12 +127,17 @@ func (ms *MemoryCache) SaveTorrent(t *m.Torrent) error {
 	return nil
 }
 
-func (ms *MemoryCache) SaveUser(u *m.User) error {
+func (ms *MemoryCache) RemoveUser(u *m.User) error {
 	ms.usersM.Lock()
-	for _, u := range users {
-		ms.users[u.Passkey] = u
-	}
+	delete(ms.users[u.Passkey])
 	ms.usersM.Unlock()
+	return nil
+}
+
+func (ms *MemoryCache) RemoveTorrent(t *m.Torrent) error {
+	ms.torrentsM.Lock()
+	delete(ms.torrents[t.InfoHash])
+	ms.torrentsM.Unlock()
 	return nil
 }
 

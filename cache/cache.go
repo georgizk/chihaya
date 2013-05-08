@@ -14,12 +14,15 @@ type Cache interface {
 	LoadTorrents(s Storage) error
 	LoadWhitelist(s Storage) error
 
-	FindTorrent(infohash string) (*m.Torrent, bool, error)
 	FindUser(passkey string) (*m.User, bool, error)
+	FindTorrent(infohash string) (*m.Torrent, bool, error)
 	PeerWhitelisted(peerId *m.Peer) (bool, error)
 
-	SaveTorrent(t *m.Torrent) error
 	SaveUser(u *m.User) error
+	SaveTorrent(t *m.Torrent) error
+
+	RemoveUser(u *m.User) error
+	RemoveTorrent(t *m.Torrent) error
 
 	m.StatCollector
 }
