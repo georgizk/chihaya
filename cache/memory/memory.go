@@ -81,18 +81,12 @@ func (ms *MemoryCache) LoadWhitelist(s Storage) (err error) {
 
 func (ms *MemoryCache) FindTorrent(infoHash string) (*m.Torrent, bool, error) {
 	t, exists := ms.torrents[infoHash]
-	if !exists {
-		return nil, false, nil
-	}
-	return t, true, nil
+	return t, exists, nil
 }
 
 func (ms *MemoryCache) FindUser(passkey string) (*m.User, bool, error) {
 	u, exists := ms.users[passkey]
-	if !exists {
-		return nil, false, nil
-	}
-	return u, true, nil
+	return u, exists, nil
 }
 
 func (ms *MemoryCache) PeerWhitelisted(peerId *m.Peer) (bool, error) {
