@@ -1,3 +1,7 @@
+// Copyright 2013 The Chihaya Authors. All rights reserved.
+// Use of this source code is governed by the BSD 2-Clause license,
+// which can be found in the LICENSE file.
+
 package memory
 
 import (
@@ -75,20 +79,20 @@ func (ms *MemoryCache) LoadWhitelist(s Storage) (err error) {
 	return
 }
 
-func (ms *MemoryCache) FindTorrentByInfoHash(infoHash string) (*m.Torrent, error) {
+func (ms *MemoryCache) FindTorrent(infoHash string) (*m.Torrent, bool, error) {
 	t, exists := ms.torrents[infoHash]
 	if !exists {
-		return nil, errors.New("Torrent not found")
+		return nil, false, nil
 	}
-	return t, nil
+	return t, true, nil
 }
 
-func (ms *MemoryCache) FindUserByPasskey(passkey string) (*m.User, error) {
+func (ms *MemoryCache) FindUser(passkey string) (*m.User, bool, error) {
 	u, exists := ms.users[passkey]
 	if !exists {
-		return nil, errors.New("User not found")
+		return nil, false, nil
 	}
-	return u, nil
+	return u, true, nil
 }
 
 func (ms *MemoryCache) PeerWhitelisted(peerId *m.Peer) (bool, error) {

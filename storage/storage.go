@@ -1,3 +1,7 @@
+// Copyright 2013 The Chihaya Authors. All rights reserved.
+// Use of this source code is governed by the BSD 2-Clause license,
+// which can be found in the LICENSE file.
+
 package storage
 
 import (
@@ -11,6 +15,7 @@ type WhitelistMapper func(p *m.Peer) error
 type Storage interface {
 	FreeleechEnabled() (bool, error)
 
+	// These are used to load the cache
 	MapOverUsers(f UserMapper) error
 	MapOverTorrents(f TorrentMapper) error
 	MapOverWhitelist(f WhitelistMapper) error
