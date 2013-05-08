@@ -79,7 +79,19 @@ func (ms *MemoryCache) loadTorrents(s Storage) (err error) {
 }
 
 func (ms *MemoryCache) loadWhitelist(s Storage) (err error) {
-	// TODO
+	ms.whitelistM.Lock()
+	defer ms.whitelistM.Unlock()
+	ms.whitelist = make([]string, 0, 100)
+
+	whitelistMapper := func(p *m.Peer) (err error) {
+		append(ms.whitelist, p.Id)
+		return nil
+	}
+	err = s.MapOverWhitelist(whitelistMapper)
+	if err != nil {
+		return
+	}
+	return
 }
 
 func (ms *MemoryCache) FindTorrentByInfoHash(infoHash string) (*m.Torrent, error) {
