@@ -8,17 +8,17 @@ import (
 	"database/sql"
 	"fmt"
 
-	_ "github.com/go-sql-driver/mysql"
-
 	m "github.com/kotokoko/chihaya/models"
 	"github.com/kotokoko/chihaya/storage"
 	"github.com/kotokoko/config"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 type DeprecatedStorage struct {
 	database *sql.DB
 
-	freeleechEnabledStmt sql.Stmt
+	freeleechEnabledStmt *sql.Stmt
 }
 
 func New(conf *config.StorageConfig) (storage.Storage, error) {
@@ -53,11 +53,14 @@ func New(conf *config.StorageConfig) (storage.Storage, error) {
 	return ds, nil
 }
 
-func (ds *DeprecatedStorage) prepareStmts() error {
-  ds.freeleechEnabledStmt, err := ds.database.Prepare(
+func (ds *DeprecatedStorage) prepareStmts() (err error) {
+	ds.freeleechEnabledStmt, err = ds.database.Prepare(
 		"SELECT mod_setting FROM mod_core WHERE mod_option='global_freeleech'",
 	)
-  return err
+	if err != nil {
+		return
+	}
+	return
 }
 
 // createSchema() creates the schema if necessary.
@@ -65,9 +68,9 @@ func (ds *DeprecatedStorage) createSchema() error {
 }
 
 func (ds *DeprecatedStorage) FreeLeechEnabled() (enabled bool, err error) {
-  err = ds.freeleechEnabledStmt.QueryRow(/*TODO*/).Scan(&enabled)
-  if err != nil {
-    return false error
-  }
-
+	err = ds.freeleechEnabledStmt.QueryRow( /*TODO*/).Scan(&enabled)
+	if err != nil {
+		return false, error
+	}
+	return
 }

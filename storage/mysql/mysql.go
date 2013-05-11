@@ -8,11 +8,11 @@ import (
 	"database/sql"
 	"fmt"
 
-	_ "github.com/go-sql-driver/mysql"
-
 	m "github.com/kotokoko/chihaya/models"
 	"github.com/kotokoko/chihaya/storage"
 	"github.com/kotokoko/config"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 type MySQLStorage struct {
