@@ -2,7 +2,7 @@
 // Use of this source code is governed by the BSD 2-Clause license,
 // which can be found in the LICENSE file.
 
-package mysql
+package deprecated
 
 import (
 	"database/sql"
@@ -15,8 +15,10 @@ import (
 	"github.com/kotokoko/config"
 )
 
-type MySQLStorage struct {
+type DeprecatedStorage struct {
 	database *sql.DB
+
+	freeleechEnabledStmt sql.Stmt
 }
 
 func New(conf *config.StorageConfig) (storage.Storage, error) {
@@ -34,21 +36,38 @@ func New(conf *config.StorageConfig) (storage.Storage, error) {
 		return nil, err
 	}
 
-	ms := &MySQLStorage{
+	ds := &DeprecatedStorage{
 		database: db,
 	}
 
-	err := ms.createSchema()
+	err = ds.prepareStmts()
 	if err != nil {
 		return nil, err
 	}
 
-	return ms, nil
+	err := ds.createSchema()
+	if err != nil {
+		return nil, err
+	}
+
+	return ds, nil
+}
+
+func (ds *DeprecatedStorage) prepareStmts() error {
+  ds.freeleechEnabledStmt, err := ds.database.Prepare(
+		"SELECT mod_setting FROM mod_core WHERE mod_option='global_freeleech'",
+	)
+  return err
 }
 
 // createSchema() creates the schema if necessary.
-func (ms *MySQLStorage) createSchema() error {
+func (ds *DeprecatedStorage) createSchema() error {
 }
 
-func (ms *MySQLStorage) FreeLeechEnabled() (bool, error) {
+func (ds *DeprecatedStorage) FreeLeechEnabled() (enabled bool, err error) {
+  err = ds.freeleechEnabledStmt.QueryRow(/*TODO*/).Scan(&enabled)
+  if err != nil {
+    return false error
+  }
+
 }

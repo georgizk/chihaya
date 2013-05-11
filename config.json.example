@@ -1,11 +1,21 @@
 {
-    "database": {
+    "addr": ":34000"
+    "log_flushes": true,
+    "slots_enabled": true,
+    "max_deadlock_retries": 20,
+
+    "storage": {
+        "driver": "deprecated",
         "user": "root",
         "pass": "",
         "database": "sample_database",
         "proto": "tcp",
         "addr": "127.0.0.1:3306",
         "encoding": "utf8"
+    },
+
+    "cache": {
+        "driver": "memory"
     },
 
     "intervals": {
@@ -22,8 +32,6 @@
         "dead_lock_wait": "1000ms"
     },
 
-    "max_deadlock_retries": 20,
-
     "buffer_sizes": {
         "torrent_flush_buffer": 10000,
         "user_flush_buffer": 10000,
@@ -32,8 +40,4 @@
         "snatch_flush_buffer": 100
     },
 
-    "log_flushes": true,
-    "slots_enabled": true,
-
-    "addr": ":34000"
 }

@@ -2,7 +2,7 @@
 // Use of this source code is governed by the BSD 2-Clause license,
 // which can be found in the LICENSE file.
 
-// Package config implements the configuration and loading of Chihaya configuration files.
+// Package config implements the marshalling/unmarhsalling configuration files.
 package config
 
 import (
@@ -54,8 +54,9 @@ type TrackerFlushBufferSizes struct {
 	Snatch          int `json:"snatch"`
 }
 
-// TrackerDatabase represents the database object in a config file.
-type TrackerDatabase struct {
+// StorageConfig represents the settings used for storage.
+type StorageConfig struct {
+	Driver   string `json:"driver"`
 	Username string `json:"user"`
 	Password string `json:"pass"`
 	Database string `json:"database"`
@@ -64,17 +65,21 @@ type TrackerDatabase struct {
 	Encoding string `json:"encoding"`
 }
 
+// CacheConfig represents the settings used for caching.
+type CacheConfig struct {
+	Driver string `json:"driver"`
+	// More to come
+}
+
 // TrackerConfig represents a whole Chihaya config file.
 type TrackerConfig struct {
-	Database     TrackerDatabase         `json:"database"`
+	Storage      StorageConfig           `json:"storage"`
+	Cache        CacheConfig             `json:"cache"`
 	Intervals    TrackerIntervals        `json:"intervals"`
 	FlushSizes   TrackerFlushBufferSizes `json:"sizes"`
 	LogFlushes   bool                    `json:"log_flushes"`
 	SlotsEnabled bool                    `json:"slots_enabled"`
 	BindAddress  string                  `json:"addr"`
-
-	// When true disregards download. This value is loaded from the database.
-	GlobalFreeleech bool `json:"global_freeleach"`
 
 	// Maximum times to retry a deadlocked query before giving up.
 	MaxDeadlockRetries int `json:"max_deadlock_retries"`
@@ -99,13 +104,17 @@ func LoadConfig(path string) (err error) {
 
 // Default TrackerConfig
 var Loaded = TrackerConfig{
-	Database: TrackerDatabase{
+	Storage: StorageConfig{
+		Driver:   "deprecated",
 		Username: "root",
 		Password: "",
 		Database: "sample_database",
 		Proto:    "tcp",
 		Addr:     "127.0.0.1:3306",
 		Encoding: "utf8",
+	},
+	Cache: CacheConfig{
+		Driver: "memory",
 	},
 	Intervals: TrackerIntervals{
 		Announce:              TrackerDuration{30 * time.Minute},
@@ -127,6 +136,5 @@ var Loaded = TrackerConfig{
 	LogFlushes:         true,
 	SlotsEnabled:       true,
 	BindAddress:        ":34000",
-	GlobalFreeleech:    false,
 	MaxDeadlockRetries: 10,
 }
