@@ -9,7 +9,7 @@ import (
 	"fmt"
 
 	m "github.com/kotokoko/chihaya/models"
-	"github.com/kotokoko/chihaya/storage"
+	s "github.com/kotokoko/chihaya/storage"
 	"github.com/kotokoko/config"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -17,7 +17,7 @@ import (
 
 type tentaclesDriver struct{}
 
-func (td *tentaclesDriver) New(conf *config.StorageConfig) (storage.Storage, error) {
+func (td *tentaclesDriver) New(conf *config.StorageConfig) (s.Storage, error) {
 	dsn := fmt.Sprintf(
 		"%s:%s@%s/%s?charset=%s",
 		conf.Username,
@@ -60,7 +60,7 @@ type tentaclesStorage struct {
 
 func (ts *tentaclesStorage) prepareStmts() (err error) {
 	ts.loadUsersStmt, err = ts.database.Prepare(
-		"SELECT ID, torrent_pass, DownMultiplier, UpMultiplier, Slots " +
+		"SELECT ID, torrent_pass, UpMultiplier, DownMultiplier, Slots " +
 			"FROM users_main WHERE Enabled='1'",
 	)
 	if err != nil {
@@ -68,7 +68,7 @@ func (ts *tentaclesStorage) prepareStmts() (err error) {
 	}
 
 	ts.loadTorrentsStmt, err = ts.database.Prepare(
-		"SELECT ID, info_hash, DownMultiplier, UpMultiplier, Snatched, Status " +
+		"SELECT ID, info_hash, UpMultiplier, DownMultiplier, Snatched, Status " +
 			"FROM torrents",
 	)
 	if err != nil {
@@ -101,6 +101,82 @@ func (ts *tentaclesStorage) FreeLeechEnabled() (enabled bool, err error) {
 	if err != nil {
 		return
 	}
+	return
+}
+
+func (ts *tentaclesStorage) MapOverUsers(f s.UserMapper) (err error) {
+	rows, err := ts.loadUsersStmt.Query()
+	if err != nil {
+		return
+	}
+
+	for rows.Next() {
+		usr := &m.User{}
+		err = rows.Scan(
+			&usr.Id,
+			&usr.Passkey,
+			&usr.UpMultiplier,
+			&usr.DownMultiplier,
+			&usr.Slots,
+		)
+		if err != nil {
+			return
+		}
+		err = f(usr)
+		if err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+func (ts *tentaclesStorage) MapOverTorrents(f s.TorrentMapper) (err error) {
+	rows, err := ts.loadTorrentsStmt.Query()
+	if err != nil {
+		return
+	}
+
+	for rows.Next() {
+		tor := &m.Torrent{}
+		err = rows.Scan(
+			&tor.Id,
+			&tor.InfoHash,
+			&tor.UpMultiplier,
+			&tor.DownMultiplier,
+			&tor.Snatched,
+			&tor.Status,
+		)
+		if err != nil {
+			return
+		}
+		err = f(tor)
+		if err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+func (ts *tentaclesStorage) MapOverWhitelist(f s.WhitelistMapper) (err error) {
+	rows, err := ts.loadWhitelistStmt.Query()
+	if err != nil {
+		return
+	}
+
+	for rows.Next() {
+		var peerId string
+		err = rows.Scan(&peerId)
+		if err != nil {
+			return
+		}
+		err = f(peerId)
+		if err != nil {
+			return
+		}
+	}
+
 	return
 }
 

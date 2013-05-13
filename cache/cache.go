@@ -6,6 +6,7 @@ package cache
 
 import (
 	"fmt"
+
 	m "github.com/kotokoko/chihaya/models"
 	"github.com/kotokoko/storage"
 )
@@ -39,13 +40,15 @@ func New(driverName string, conf *config.StorageConfig) (Cache, error) {
 }
 
 type Cache interface {
-	LoadUsers(s Storage) error
-	LoadTorrents(s Storage) error
-	LoadWhitelist(s Storage) error
+	Shutdown() error
+
+	LoadUsers(s storage.Storage) error
+	LoadTorrents(s storage.Storage) error
+	LoadWhitelist(s storage.Storage) error
 
 	FindUser(passkey string) (*m.User, bool, error)
 	FindTorrent(infohash string) (*m.Torrent, bool, error)
-	PeerWhitelisted(peerId *m.Peer) (bool, error)
+	PeerWhitelisted(peerId string) (bool, error)
 
 	SaveUser(u *m.User) error
 	SaveTorrent(t *m.Torrent) error

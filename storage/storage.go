@@ -41,6 +41,8 @@ type TorrentMapper func(t *m.Torrent) error
 type WhitelistMapper func(p *m.Peer) error
 
 type Storage interface {
+	Shutdown() error
+
 	FreeleechEnabled() (bool, error)
 
 	// These are used to load the cache
@@ -51,7 +53,6 @@ type Storage interface {
 	RecordSnatch(peer *m.Peer, now int64) error
 	RecordTorrent(torrent *m.Torrent, deltaSnatch uint64) error
 	RecordTransferIP(peer *m.Peer) error
-
 	RecordTransferHistory(
 		peer *Peer,
 		rawDeltaUpload int64,
@@ -60,7 +61,6 @@ type Storage interface {
 		deltaSnatch uint64,
 		active bool,
 	) error
-
 	RecordUser(
 		user *m.User,
 		rawDeltaUpload int64,
