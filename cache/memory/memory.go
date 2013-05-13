@@ -12,7 +12,17 @@ import (
 	m "github.com/kotokoko/chihaya/models"
 )
 
-type MemoryCache struct {
+type memoryDriver struct{}
+
+func (md *memoryDriver) New(conf *config.StorageConfig) (cache.Cache, error) {
+	return &memoryCache{
+		users:     make(map[string]*m.User),
+		torrents:  make(map[string]*m.Torrent),
+		whitelist: make([]string, 0, 100),
+	}, nil
+}
+
+type memoryCache struct {
 	users  map[string]*m.User
 	usersM sync.RWMutex
 
@@ -23,15 +33,7 @@ type MemoryCache struct {
 	whitelistM sync.RWMutex
 }
 
-func New() cache.Cache {
-	return &MemoryStorage{
-		users:     make(map[string]*m.User),
-		torrents:  make(map[string]*m.Torrent),
-		whitelist: make([]string, 0, 100),
-	}
-}
-
-func (ms *MemoryCache) LoadUsers(s Storage) (err error) {
+func (ms *memoryCache) LoadUsers(s Storage) (err error) {
 	ms.usersM.Lock()
 	defer ms.usersM.Unlock()
 
@@ -47,7 +49,7 @@ func (ms *MemoryCache) LoadUsers(s Storage) (err error) {
 	return
 }
 
-func (ms *MemoryCache) LoadTorrents(s Storage) (err error) {
+func (ms *memoryCache) LoadTorrents(s Storage) (err error) {
 	ms.torrentsM.Lock()
 	defer ms.torrentsM.Unlock()
 
@@ -63,7 +65,7 @@ func (ms *MemoryCache) LoadTorrents(s Storage) (err error) {
 	return
 }
 
-func (ms *MemoryCache) LoadWhitelist(s Storage) (err error) {
+func (ms *memoryCache) LoadWhitelist(s Storage) (err error) {
 	ms.whitelistM.Lock()
 	defer ms.whitelistM.Unlock()
 	ms.whitelist = make([]string, 0, 100)
@@ -79,17 +81,17 @@ func (ms *MemoryCache) LoadWhitelist(s Storage) (err error) {
 	return
 }
 
-func (ms *MemoryCache) FindUser(passkey string) (*m.User, bool, error) {
+func (ms *memoryCache) FindUser(passkey string) (*m.User, bool, error) {
 	u, exists := ms.users[passkey]
 	return u, exists, nil
 }
 
-func (ms *MemoryCache) FindTorrent(infoHash string) (*m.Torrent, bool, error) {
+func (ms *memoryCache) FindTorrent(infoHash string) (*m.Torrent, bool, error) {
 	t, exists := ms.torrents[infoHash]
 	return t, exists, nil
 }
 
-func (ms *MemoryCache) PeerWhitelisted(peerId *m.Peer) (bool, error) {
+func (ms *memoryCache) PeerWhitelisted(peerId *m.Peer) (bool, error) {
 	ms.whitelistM.RLock()
 	defer ms.whitelistM.RUnlock()
 
@@ -111,7 +113,7 @@ func (ms *MemoryCache) PeerWhitelisted(peerId *m.Peer) (bool, error) {
 	return false
 }
 
-func (ms *MemoryCache) SaveUser(u *m.User) error {
+func (ms *memoryCache) SaveUser(u *m.User) error {
 	ms.usersM.Lock()
 	for _, u := range users {
 		ms.users[u.Passkey] = u
@@ -120,42 +122,42 @@ func (ms *MemoryCache) SaveUser(u *m.User) error {
 	return nil
 }
 
-func (ms *MemoryCache) SaveTorrent(t *m.Torrent) error {
+func (ms *memoryCache) SaveTorrent(t *m.Torrent) error {
 	ms.torrentsM.Lock()
 	ms.torrents[t.InfoHash] = t
 	ms.torrentsM.Unlock()
 	return nil
 }
 
-func (ms *MemoryCache) RemoveUser(u *m.User) error {
+func (ms *memoryCache) RemoveUser(u *m.User) error {
 	ms.usersM.Lock()
 	delete(ms.users[u.Passkey])
 	ms.usersM.Unlock()
 	return nil
 }
 
-func (ms *MemoryCache) RemoveTorrent(t *m.Torrent) error {
+func (ms *memoryCache) RemoveTorrent(t *m.Torrent) error {
 	ms.torrentsM.Lock()
 	delete(ms.torrents[t.InfoHash])
 	ms.torrentsM.Unlock()
 	return nil
 }
 
-func (ms *MemoryCache) TotalUsers() (int, error) {
+func (ms *memoryCache) TotalUsers() (int, error) {
 	ms.usersM.RLock()
 	length := len(ms.users)
 	ms.usersM.RUnLock()
 	return length, nil
 }
 
-func (ms *MemoryCache) TotalTorrents() (int, error) {
+func (ms *memoryCache) TotalTorrents() (int, error) {
 	ms.torrentsM.RLock()
 	length := len(ms.torrents)
 	ms.torrentsM.RUnLock()
 	return length, nil
 }
 
-func (ms *MemoryCache) TotalPeers() (int, error) {
+func (ms *memoryCache) TotalPeers() (int, error) {
 	ms.torrentsM.RLock()
 	peers := 0
 	for _, t := range ms.torrents {
@@ -163,4 +165,8 @@ func (ms *MemoryCache) TotalPeers() (int, error) {
 	}
 	ms.torrentsM.RUnLock()
 	return peers, nil
+}
+
+func init() {
+	cache.Register("memory", memorydriver{})
 }

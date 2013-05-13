@@ -54,7 +54,7 @@ type TrackerFlushBufferSizes struct {
 	Snatch          int `json:"snatch"`
 }
 
-// StorageConfig represents the settings used for storage.
+// StorageConfig represents the settings used for storage or cache.
 type StorageConfig struct {
 	Driver   string `json:"driver"`
 	Username string `json:"user"`
@@ -65,16 +65,10 @@ type StorageConfig struct {
 	Encoding string `json:"encoding"`
 }
 
-// CacheConfig represents the settings used for caching.
-type CacheConfig struct {
-	Driver string `json:"driver"`
-	// More to come
-}
-
 // TrackerConfig represents a whole Chihaya config file.
 type TrackerConfig struct {
 	Storage      StorageConfig           `json:"storage"`
-	Cache        CacheConfig             `json:"cache"`
+	Cache        StorageConfig           `json:"cache"`
 	Intervals    TrackerIntervals        `json:"intervals"`
 	FlushSizes   TrackerFlushBufferSizes `json:"sizes"`
 	LogFlushes   bool                    `json:"log_flushes"`
@@ -105,15 +99,14 @@ func LoadConfig(path string) (err error) {
 // Default TrackerConfig
 var Loaded = TrackerConfig{
 	Storage: StorageConfig{
-		Driver:   "deprecated",
+		Driver:   "tentacles",
 		Username: "root",
 		Password: "",
 		Database: "sample_database",
-		Proto:    "tcp",
 		Addr:     "127.0.0.1:3306",
 		Encoding: "utf8",
 	},
-	Cache: CacheConfig{
+	Cache: StorageConfig{
 		Driver: "memory",
 	},
 	Intervals: TrackerIntervals{

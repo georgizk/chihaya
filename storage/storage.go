@@ -8,6 +8,34 @@ import (
 	m "github.com/kotokoko/chihaya/models"
 )
 
+var drivers = make(map[string]StorageDriver)
+
+type StorageDriver interface {
+	New(*config.StorageConfig) (Storage, error)
+}
+
+func Register(name string, driver StorageDriver) {
+	if driver == nil {
+		panic("storage: Register driver is nil")
+	}
+	if _, dup := drivers[name]; dup {
+		panic("storage: Register called twice for driver " + name)
+	}
+	drivers[name] = driver
+}
+
+func New(driverName string, conf *config.StorageConfig) (Storage, error) {
+	driver, ok := drivers[driverName]
+	if !ok {
+		return nil, fmt.Errorf("storage: unknown driver %q (forgotten import?)", driverName)
+	}
+	store, err := driver.New(conf)
+	if err != nil {
+		return nil, err
+	}
+	return store, nil
+}
+
 type UserMapper func(u *m.User) error
 type TorrentMapper func(t *m.Torrent) error
 type WhitelistMapper func(p *m.Peer) error

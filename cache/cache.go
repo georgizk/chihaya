@@ -5,9 +5,38 @@
 package cache
 
 import (
+	"fmt"
 	m "github.com/kotokoko/chihaya/models"
 	"github.com/kotokoko/storage"
 )
+
+var drivers = make(map[string]CacheDriver)
+
+type CacheDriver interface {
+	New(*config.StorageConfig) (Cache, error)
+}
+
+func Register(name string, driver CacheDriver) {
+	if driver == nil {
+		panic("cache: Register driver is nil")
+	}
+	if _, dup := drivers[name]; dup {
+		panic("cache: Register called twice for driver " + name)
+	}
+	drivers[name] = driver
+}
+
+func New(driverName string, conf *config.StorageConfig) (Cache, error) {
+	driver, ok := drivers[driverName]
+	if !ok {
+		return nil, fmt.Errorf("cache: unknown driver %q (forgotten import?)", driverName)
+	}
+	store, err := driver.New(conf)
+	if err != nil {
+		return nil, err
+	}
+	return store, nil
+}
 
 type Cache interface {
 	LoadUsers(s Storage) error
