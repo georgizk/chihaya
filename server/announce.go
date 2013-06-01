@@ -12,8 +12,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/kotokoko/chihaya/config"
-	cdb "github.com/kotokoko/chihaya/database"
+	"github.com/kotoko/chihaya/config"
+	cdb "github.com/kotoko/chihaya/database"
 )
 
 func whitelisted(peerId string, db *cdb.Database) bool {

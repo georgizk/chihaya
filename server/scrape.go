@@ -7,7 +7,7 @@ package server
 import (
 	"bytes"
 
-	cdb "github.com/kotokoko/chihaya/database"
+	cdb "github.com/kotoko/chihaya/database"
 )
 
 func writeScrapeInfo(torrent *cdb.Torrent, buf *bytes.Buffer) {

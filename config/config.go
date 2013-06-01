@@ -45,7 +45,7 @@ type TrackerIntervals struct {
 }
 
 // TrackerFlushBufferSizes represents the buffer_sizes object in a config file.
-// See github.com/kotokoko/chihaya/database/Database.startFlushing() for more info.
+// See github.com/kotoko/chihaya/database/Database.startFlushing() for more info.
 type TrackerFlushBufferSizes struct {
 	Torrent         int `json:"torrent"`
 	User            int `json:"user"`

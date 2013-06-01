@@ -18,9 +18,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/kotokoko/chihaya/bufferpool"
-	"github.com/kotokoko/chihaya/config"
-	cdb "github.com/kotokoko/chihaya/database"
+	"github.com/kotoko/chihaya/bufferpool"
+	"github.com/kotoko/chihaya/config"
+	cdb "github.com/kotoko/chihaya/database"
 )
 
 type httpHandler struct {

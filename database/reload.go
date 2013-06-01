@@ -9,7 +9,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/kotokoko/chihaya/config"
+	"github.com/kotoko/chihaya/config"
 )
 
 /*
