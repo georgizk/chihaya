@@ -6,6 +6,6 @@ script:
 install:
     - cd $GOPATH/src/github.com/kotoko/chihaya/
     - cp config.json.example config.json
-    - go build -v github.com/kotoko/chihaya
-    - go install -v github.com/kotoko/chihaya
+    - go get -v
+    - go build -v
     - mysql < mysql_test_schema.sql
