@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS  sample_database.torrents
 engine=innodb
 DEFAULT charset=utf8;
 
-TABLE IF NOT EXISTS  sample_database.xbt_client_whitelist
+CREATE TABLE IF NOT EXISTS  sample_database.xbt_client_whitelist
   (
       id       INT(10) UNSIGNED NOT NULL auto_increment,
       peer_id  VARCHAR(20) DEFAULT NULL,
