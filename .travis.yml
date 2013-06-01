@@ -4,8 +4,8 @@ script:
     - go test -v ./...
 
 install:
+    - cd $GOPATH/src/github.com/kotoko/chihaya/
     - cp config.json.example config.json
-    - cp -rfv ./* $GOPATH/src/github.com/kotoko/chihaya/
     - go build -v github.com/kotoko/chihaya
     - go install -v github.com/kotoko/chihaya
     - mysql < mysql_test_schema.sql
