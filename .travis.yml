@@ -8,4 +8,4 @@ before_script:
     - cp -rfv ./* $GOPATH/src/github.com/kotoko/chihaya/
     - go build -v github.com/kotoko/chihaya
     - go install -v github.com/kotoko/chihaya
-    - ./mySQL_sample_setup.sh 
+    - mysql < mysql_test_schema.sql

@@ -1,6 +1,5 @@
-#!/usr/bin/env sh
-mysql -e "CREATE DATABASE sample_database;"
-mysql -e "CREATE TABLE IF NOT EXISTS  sample_database.users_main 
+CREATE DATABASE sample_database;
+CREATE TABLE IF NOT EXISTS  sample_database.users_main
   (
       id              INT(10) UNSIGNED NOT NULL auto_increment,
       uploaded        BIGINT(20) UNSIGNED NOT NULL DEFAULT '0',
@@ -19,9 +18,9 @@ mysql -e "CREATE TABLE IF NOT EXISTS  sample_database.users_main
      KEY  torrent_pass  ( torrent_pass )
   )
 engine=innodb
-DEFAULT charset=utf8;"
+DEFAULT charset=utf8;
 
-mysql -e "CREATE TABLE IF NOT EXISTS  sample_database.torrents 
+CREATE TABLE IF NOT EXISTS  sample_database.torrents
   (
       id              INT(10) NOT NULL auto_increment,
       info_hash       BLOB NOT NULL,
@@ -38,9 +37,9 @@ mysql -e "CREATE TABLE IF NOT EXISTS  sample_database.torrents
      KEY  last_action  ( last_action )
   )
 engine=innodb
-DEFAULT charset=utf8;" 
+DEFAULT charset=utf8;
 
-mysql -e "CREATE TABLE IF NOT EXISTS  sample_database.xbt_client_whitelist 
+TABLE IF NOT EXISTS  sample_database.xbt_client_whitelist
   (
       id       INT(10) UNSIGNED NOT NULL auto_increment,
       peer_id  VARCHAR(20) DEFAULT NULL,
@@ -50,17 +49,17 @@ mysql -e "CREATE TABLE IF NOT EXISTS  sample_database.xbt_client_whitelist
      UNIQUE KEY  peer_id  ( peer_id )
   )
 engine=innodb
-DEFAULT charset=utf8; "
- 
-mysql -e "CREATE TABLE IF NOT EXISTS sample_database.mod_core
+DEFAULT charset=utf8;
+
+CREATE TABLE IF NOT EXISTS sample_database.mod_core
   (
      mod_setting varchar(20),
      mod_option varchar(20)
   )
 engine=innodb
-DEFAULT charset=utf8;"
+DEFAULT charset=utf8;
 
-mysql -e "CREATE TABLE IF NOT EXISTS sample_database.transfer_history 
+CREATE TABLE IF NOT EXISTS sample_database.transfer_history
   (
       uid            INT(11) NOT NULL DEFAULT '0',
       fid            INT(11) NOT NULL DEFAULT '0',
@@ -82,5 +81,5 @@ mysql -e "CREATE TABLE IF NOT EXISTS sample_database.transfer_history
      KEY  fid  ( fid )
   )
 engine=innodb
-DEFAULT charset=utf8; " 
+DEFAULT charset=utf8;
 
