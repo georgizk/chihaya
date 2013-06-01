@@ -3,7 +3,7 @@ language: go
 script:
     - go test -v ./...
 
-before_script:
+install:
     - cp config.json.example config.json
     - cp -rfv ./* $GOPATH/src/github.com/kotoko/chihaya/
     - go build -v github.com/kotoko/chihaya
