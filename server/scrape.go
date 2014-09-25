@@ -37,6 +37,7 @@ func writeScrapeInfo(torrent *cdb.Torrent, buf *bytes.Buffer) {
 func scrape(params *queryParams, db *cdb.Database, buf *bytes.Buffer) {
 	buf.WriteRune('d')
 	util.Bencode("files", buf)
+	buf.WriteRune('d')
 	db.TorrentsMutex.RLock()
 	if params.infoHashes != nil {
 		for _, infoHash := range params.infoHashes {
@@ -54,5 +55,6 @@ func scrape(params *queryParams, db *cdb.Database, buf *bytes.Buffer) {
 		}
 	}
 	db.TorrentsMutex.RUnlock()
+	buf.WriteRune('e')
 	buf.WriteRune('e')
 }
