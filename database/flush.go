@@ -22,7 +22,6 @@ import (
 	"chihaya/config"
 	"chihaya/util"
 	"log"
-	"sync/atomic"
 	"time"
 )
 
@@ -49,7 +48,6 @@ func (db *Database) startFlushing() {
 	db.transferHistoryChannel = make(chan *bytes.Buffer, config.TransferHistoryFlushBufferSize)
 	db.transferIpsChannel = make(chan *bytes.Buffer, config.TransferIpsFlushBufferSize)
 	db.snatchChannel = make(chan *bytes.Buffer, config.SnatchFlushBufferSize)
-	db.slotVerificationChannel = make(chan *User, 100)
 
 	go db.flushTorrents()
 	go db.flushUsers()
@@ -58,7 +56,6 @@ func (db *Database) startFlushing() {
 	go db.flushSnatches()
 
 	go db.purgeInactivePeers()
-	go db.startUsedSlotsVerification()
 }
 
 func (db *Database) flushTorrents() {
@@ -331,14 +328,6 @@ func (db *Database) purgeInactivePeers() {
 			for id, peer := range torrent.Leechers {
 				if peer.LastAnnounce < oldestActive {
 					delete(torrent.Leechers, id)
-
-					// TODO: possibly optimize this
-					for _, user := range db.Users {
-						if user.Id == peer.UserId {
-							atomic.AddInt64(&user.UsedSlots, -1)
-							break
-						}
-					}
 					count++
 				}
 			}
@@ -375,47 +364,3 @@ func (db *Database) purgeInactivePeers() {
 	}
 }
 
-/*
- * Deleting a torrent that a user is leeching will cause their slot count to be incorrect,
- * so the count is verified every so often
- */
-func (db *Database) startUsedSlotsVerification() {
-	if !config.SlotsEnabled {
-		log.Printf("Slots disabled, skipping slot verification")
-		return
-	}
-
-	var slots int64
-	for !db.terminate {
-		user := <-db.slotVerificationChannel
-		if user == nil {
-			break
-		}
-		if user.Slots == -1 {
-			continue
-		}
-
-		db.waitGroup.Add(1)
-		userId := user.Id
-
-		slots = 0
-		db.TorrentsMutex.RLock()
-		for _, torrent := range db.Torrents {
-			for _, peer := range torrent.Leechers {
-				if peer.UserId == userId {
-					slots++
-				}
-			}
-		}
-		db.TorrentsMutex.RUnlock()
-		if user.UsedSlots != slots {
-			if user.UsedSlots < slots {
-				log.Printf("!!! WARNING/BUG !!! Negative UsedSlots value (%d < %d) for user %d\n", user.UsedSlots, slots, user.Id)
-			}
-			atomic.StoreInt64(&user.UsedSlots, slots)
-			log.Printf("Fixed used slot cache for user %d", userId)
-		}
-
-		db.waitGroup.Done()
-	}
-}

@@ -43,7 +43,7 @@ type httpHandler struct {
 
 	// Internal stats
 	deltaRequests int64
-	throughput    float64
+	throughput    int64
 }
 
 type queryParams struct {
@@ -242,7 +242,7 @@ func (handler *httpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			peers += len(t.Leechers) + len(t.Seeders)
 		}
 
-		buf.WriteString(fmt.Sprintf("Uptime: %f\nUsers: %d\nTorrents: %d\nPeers: %d\nThroughput (last minute): %f req/s\n",
+		buf.WriteString(fmt.Sprintf("Uptime: %f\nUsers: %d\nTorrents: %d\nPeers: %d\nThroughput: %d rpm\n",
 			time.Now().Sub(handler.startTime).Seconds(),
 			len(db.Users),
 			len(db.Torrents),
@@ -326,10 +326,10 @@ func collectStatistics() {
 	for {
 		time.Sleep(time.Minute)
 		duration := time.Now().Sub(lastTime)
-		handler.throughput = float64(handler.deltaRequests) / duration.Seconds()
+		handler.throughput = int64(float64(handler.deltaRequests) / duration.Seconds() * 60 + 0.5)
 		atomic.StoreInt64(&handler.deltaRequests, 0)
 
-		log.Printf("Throughput last minute: %4f req/s\n", handler.throughput)
+		log.Printf("Throughput: %d rpm\n", handler.throughput)
 		lastTime = time.Now()
 	}
 }

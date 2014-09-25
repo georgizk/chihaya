@@ -125,3 +125,7 @@ func (r *rowWrapper) Float64(nn int) float64 {
 	log.Panicf("f64 %T", r.r[nn])
 	return 0
 }
+
+func (r *rowWrapper) Bool(nn int) bool {
+	return r.r.Bool(nn)
+}

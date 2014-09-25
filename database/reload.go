@@ -69,7 +69,7 @@ func (db *Database) loadUsers() {
 	torrentPass := result.Map("torrent_pass")
 	downMultiplier := result.Map("DownMultiplier")
 	upMultiplier := result.Map("UpMultiplier")
-	slots := result.Map("Slots")
+	disableDownload := result.Map("DisableDownload")
 
 	for {
 		err = result.ScanRow(row.r)
@@ -86,15 +86,14 @@ func (db *Database) loadUsers() {
 			old.Id = row.Uint64(id)
 			old.DownMultiplier = row.Float64(downMultiplier)
 			old.UpMultiplier = row.Float64(upMultiplier)
-			old.Slots = row.Int64(slots)
+			old.DisableDownload = row.Bool(disableDownload)
 			newUsers[torrentPass] = old
 		} else {
 			newUsers[torrentPass] = &User{
-				Id:             row.Uint64(id),
-				UpMultiplier:   row.Float64(downMultiplier),
-				DownMultiplier: row.Float64(upMultiplier),
-				Slots:          row.Int64(slots),
-				UsedSlots:      0,
+				Id:              row.Uint64(id),
+				UpMultiplier:    row.Float64(downMultiplier),
+				DownMultiplier:  row.Float64(upMultiplier),
+				DisableDownload: row.Bool(disableDownload),
 			}
 		}
 		count++

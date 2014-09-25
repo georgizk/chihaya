@@ -25,7 +25,6 @@ import (
 	"fmt"
 	"log"
 	"strconv"
-	"sync/atomic"
 	"time"
 )
 
@@ -122,6 +121,10 @@ func announce(params *queryParams, user *cdb.User, ip string, db *cdb.Database, 
 	completed := event == "completed"
 
 	if left > 0 {
+		if user.DisableDownload {
+			failure("Your download privileges are disabled.", buf)
+			return
+		}
 		peer, exists = torrent.Leechers[peerId]
 		if !exists {
 			newPeer = true
@@ -138,7 +141,6 @@ func announce(params *queryParams, user *cdb.User, ip string, db *cdb.Database, 
 			// They're a seeder now
 			torrent.Seeders[peerId] = peer
 			delete(torrent.Leechers, peerId)
-			atomic.AddInt64(&user.UsedSlots, -1)
 		}
 		seeding = true
 	} else { // Previously completed (probably)
@@ -153,7 +155,6 @@ func announce(params *queryParams, user *cdb.User, ip string, db *cdb.Database, 
 				// They're a seeder now.. Broken client? Unreported snatch?
 				torrent.Seeders[peerId] = peer
 				delete(torrent.Leechers, peerId)
-				atomic.AddInt64(&user.UsedSlots, -1)
 				// completed = true // TODO: not sure if this will result in over-reported snatches
 			}
 		}
@@ -162,13 +163,6 @@ func announce(params *queryParams, user *cdb.User, ip string, db *cdb.Database, 
 
 	// Update peer info/stats
 	if newPeer {
-		if user.Slots != -1 && config.SlotsEnabled && !seeding {
-			if user.UsedSlots >= user.Slots {
-				failure("You don't have enough slots free. Stop downloading something and try again.", buf)
-				return
-			}
-		}
-
 		peer.Id = peerId
 		peer.UserId = user.Id
 		peer.TorrentId = torrent.Id
@@ -176,10 +170,6 @@ func announce(params *queryParams, user *cdb.User, ip string, db *cdb.Database, 
 		peer.LastAnnounce = now
 		peer.Uploaded = uploaded
 		peer.Downloaded = downloaded
-
-		if !seeding {
-			atomic.AddInt64(&user.UsedSlots, 1)
-		}
 	}
 
 	rawDeltaUpload := int64(uploaded) - int64(peer.Uploaded)
@@ -221,7 +211,6 @@ func announce(params *queryParams, user *cdb.User, ip string, db *cdb.Database, 
 			delete(torrent.Seeders, peerId)
 		} else {
 			delete(torrent.Leechers, peerId)
-			atomic.AddInt64(&user.UsedSlots, -1)
 		}
 
 		active = false
@@ -276,14 +265,6 @@ func announce(params *queryParams, user *cdb.User, ip string, db *cdb.Database, 
 		db.RecordTransferIp(peer)
 	}
 
-	// Although slots used are still calculated for users with no restriction,
-	// we don't care as much about consistency for them. If they suddenly get a restriction,
-	// their slot count will be cleaned up on their next announce
-	if user.SlotsLastChecked+config.VerifyUsedSlotsInterval < now && user.Slots != -1 && config.SlotsEnabled {
-		db.VerifyUsedSlots(user)
-		atomic.StoreInt64(&user.SlotsLastChecked, now)
-	}
-
 	// Generate response
 	seedCount := len(torrent.Seeders)
 	leechCount := len(torrent.Leechers)
@@ -305,38 +286,23 @@ func announce(params *queryParams, user *cdb.User, ip string, db *cdb.Database, 
 		compact := exists && compactString == "1"
 
 		var peerCount int
-		count := 0
-
-		if compact {
-			if seeding {
-				peerCount = util.Min(numWant, leechCount)
-			} else {
-				peerCount = util.Min(numWant, leechCount+seedCount-1)
-			}
-			buf.WriteString(strconv.Itoa(peerCount * 6))
-			buf.WriteRune(':')
+		if seeding {
+			peerCount = util.Min(numWant, leechCount)
 		} else {
-			buf.WriteRune('l')
+			peerCount = util.Min(numWant, leechCount+seedCount-1)
 		}
+
+		peersToSend := make([]*cdb.Peer, 0, peerCount)
 
 		if seeding {
 			for _, leech := range torrent.Leechers {
-				if count >= numWant {
+				if len(peersToSend) >= numWant {
 					break
 				}
-				if compact {
-					buf.Write(leech.Addr)
-				} else {
-					buf.WriteRune('d')
-					util.Bencode("ip", buf)
-					util.Bencode(leech.Ip, buf)
-					util.Bencode("peer id", buf)
-					util.Bencode(leech.Id, buf)
-					util.Bencode("port", buf)
-					util.Bencode(leech.Port, buf)
-					buf.WriteRune('e')
+				if leech.UserId == peer.UserId {
+					continue
 				}
-				count++
+				peersToSend = append(peersToSend, leech)
 			}
 		} else {
 			/*
@@ -351,51 +317,43 @@ func announce(params *queryParams, user *cdb.User, ip string, db *cdb.Database, 
 			 */
 
 			for _, seed := range torrent.Seeders {
-				if count >= numWant {
+				if len(peersToSend) >= numWant {
 					break
 				}
-				if compact {
-					buf.Write(seed.Addr)
-				} else {
-					buf.WriteRune('d')
-					util.Bencode("ip", buf)
-					util.Bencode(seed.Ip, buf)
-					util.Bencode("peer id", buf)
-					util.Bencode(seed.Id, buf)
-					util.Bencode("port", buf)
-					util.Bencode(seed.Port, buf)
-					buf.WriteRune('e')
+				if seed.UserId == peer.UserId {
+					continue
 				}
-				count++
+				peersToSend = append(peersToSend, seed)
 			}
 
 			for _, leech := range torrent.Leechers {
-				if count >= numWant {
+				if len(peersToSend) >= numWant {
 					break
 				}
-				if leech != peer {
-					if compact {
-						buf.Write(leech.Addr)
-					} else {
-						buf.WriteRune('d')
-						util.Bencode("ip", buf)
-						util.Bencode(leech.Ip, buf)
-						util.Bencode("peer id", buf)
-						util.Bencode(leech.Id, buf)
-						util.Bencode("port", buf)
-						util.Bencode(leech.Port, buf)
-						buf.WriteRune('e')
-					}
-					count++
+				if leech.UserId == peer.UserId {
+					continue
 				}
+				peersToSend = append(peersToSend, leech)
 			}
 		}
-
-		if compact && peerCount != count {
-			log.Printf("!!! WARNING/BUG !!! Calculated peer count (%d) != real count (%d) !!!\n", peerCount, count)
-		}
-
-		if !compact {
+		if compact {
+			buf.WriteString(strconv.Itoa(len(peersToSend) * 6))
+			buf.WriteRune(':')
+			for _, other := range peersToSend {
+				buf.Write(other.Addr)
+			}
+		} else {
+			buf.WriteRune('l')
+			for _, other := range peersToSend {
+				buf.WriteRune('d')
+				util.Bencode("ip", buf)
+				util.Bencode(other.Ip, buf)
+				util.Bencode("peer id", buf)
+				util.Bencode(other.Id, buf)
+				util.Bencode("port", buf)
+				util.Bencode(other.Port, buf)
+				buf.WriteRune('e')
+			}
 			buf.WriteRune('e')
 		}
 	}
