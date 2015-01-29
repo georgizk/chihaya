@@ -260,6 +260,7 @@ func announce(params *queryParams, user *cdb.User, ip string, db *cdb.Database, 
 	db.RecordTorrent(torrent, deltaSnatch)
 	db.RecordTransferHistory(peer, rawDeltaUpload, rawDeltaDownload, deltaTime, deltaSnatch, active)
 	db.RecordUser(user, rawDeltaUpload, rawDeltaDownload, deltaUpload, deltaDownload)
+	record(peer.TorrentId, peer.UserId, rawDeltaUpload, rawDeltaDownload)
 
 	if shouldFlushAddr {
 		db.RecordTransferIp(peer)
