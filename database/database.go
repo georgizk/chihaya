@@ -60,9 +60,9 @@ type Torrent struct {
 }
 
 type User struct {
-	Id             uint64
-	UpMultiplier   float64
-	DownMultiplier float64
+	Id              uint64
+	UpMultiplier    float64
+	DownMultiplier  float64
 	DisableDownload bool
 }
 
@@ -82,6 +82,7 @@ type Database struct {
 	loadFreeleechStmt   mysql.Stmt
 	cleanStalePeersStmt mysql.Stmt
 	unPruneTorrentStmt  mysql.Stmt
+	insertSiteLogStmt   mysql.Stmt
 
 	Users      map[string]*User // 32 bytes
 	UsersMutex sync.RWMutex
@@ -92,11 +93,11 @@ type Database struct {
 	Whitelist      []string
 	WhitelistMutex sync.RWMutex
 
-	torrentChannel          chan *bytes.Buffer
-	userChannel             chan *bytes.Buffer
-	transferHistoryChannel  chan *bytes.Buffer
-	transferIpsChannel      chan *bytes.Buffer
-	snatchChannel           chan *bytes.Buffer
+	torrentChannel         chan *bytes.Buffer
+	userChannel            chan *bytes.Buffer
+	transferHistoryChannel chan *bytes.Buffer
+	transferIpsChannel     chan *bytes.Buffer
+	snatchChannel          chan *bytes.Buffer
 
 	waitGroup                sync.WaitGroup
 	transferHistoryWaitGroup sync.WaitGroup
@@ -120,7 +121,8 @@ func (db *Database) Init() {
 	db.loadWhitelistStmt = db.mainConn.prepareStatement("SELECT peer_id FROM xbt_client_whitelist")
 	db.loadFreeleechStmt = db.mainConn.prepareStatement("SELECT mod_setting FROM mod_core WHERE mod_option='global_freeleech'")
 	db.cleanStalePeersStmt = db.mainConn.prepareStatement("UPDATE transfer_history SET active = '0' WHERE last_announce < ? AND active='1'")
-	db.unPruneTorrentStmt = db.mainConn.prepareStatement("UPDATE torrents SET Status=0 WHERE ID = ?")
+	db.unPruneTorrentStmt = db.mainConn.prepareStatement("UPDATE torrents SET Status = 0, UserID = ? WHERE ID = ?")
+	db.insertSiteLogStmt = db.mainConn.prepareStatement("INSERT INTO log (Message, Time, UserID, `Type`) VALUES (?, ?, ?, 'torrent')")
 
 	db.Users = make(map[string]*User)
 	db.Torrents = make(map[string]*Torrent)

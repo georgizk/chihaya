@@ -20,7 +20,9 @@ package database
 import (
 	"chihaya/util"
 	"encoding/base64"
+	"fmt"
 	"strconv"
+	"time"
 )
 
 /*
@@ -131,8 +133,9 @@ func (db *Database) RecordSnatch(peer *Peer, now int64) {
 	db.snatchChannel <- sn
 }
 
-func (db *Database) UnPrune(torrent *Torrent) {
+func (db *Database) UnPrune(torrent *Torrent, user *User) {
 	db.mainConn.mutex.Lock()
-	db.mainConn.exec(db.unPruneTorrentStmt, torrent.Id)
+	db.mainConn.exec(db.unPruneTorrentStmt, user.Id, torrent.Id)
+	db.mainConn.exec(db.insertSiteLogStmt, fmt.Sprintf("Torrent %d was un-pruned", torrent.Id), time.Now(), user.Id)
 	db.mainConn.mutex.Unlock()
 }
