@@ -147,8 +147,8 @@ func (db *Database) loadTorrents() {
 		} else {
 			newTorrents[infoHash] = &Torrent{
 				Id:             row.Uint64(id),
-				UpMultiplier:   row.Float64(downMultiplier),
-				DownMultiplier: row.Float64(upMultiplier),
+				UpMultiplier:   row.Float64(upMultiplier),
+				DownMultiplier: row.Float64(downMultiplier),
 				Snatched:       row.Uint(snatched),
 				Status:         row.Int64(status),
 
