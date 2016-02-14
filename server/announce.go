@@ -119,42 +119,43 @@ func announce(params *queryParams, user *cdb.User, ip string, db *cdb.Database, 
 	seeding := false
 	active := true
 	completed := event == "completed"
+	peerKey := fmt.Sprintf("%d-%s", user.Id, peerId)
 
 	if left > 0 {
 		if user.DisableDownload {
 			failure("Your download privileges are disabled.", buf)
 			return
 		}
-		peer, exists = torrent.Leechers[peerId]
+		peer, exists = torrent.Leechers[peerKey]
 		if !exists {
 			newPeer = true
 			peer = &cdb.Peer{}
-			torrent.Leechers[peerId] = peer
+			torrent.Leechers[peerKey] = peer
 		}
 	} else if completed {
-		peer, exists = torrent.Leechers[peerId]
+		peer, exists = torrent.Leechers[peerKey]
 		if !exists {
 			newPeer = true
 			peer = &cdb.Peer{}
-			torrent.Seeders[peerId] = peer
+			torrent.Seeders[peerKey] = peer
 		} else {
 			// They're a seeder now
-			torrent.Seeders[peerId] = peer
-			delete(torrent.Leechers, peerId)
+			torrent.Seeders[peerKey] = peer
+			delete(torrent.Leechers, peerKey)
 		}
 		seeding = true
 	} else { // Previously completed (probably)
-		peer, exists = torrent.Seeders[peerId]
+		peer, exists = torrent.Seeders[peerKey]
 		if !exists {
-			peer, exists = torrent.Leechers[peerId]
+			peer, exists = torrent.Leechers[peerKey]
 			if !exists {
 				newPeer = true
 				peer = &cdb.Peer{}
-				torrent.Seeders[peerId] = peer
+				torrent.Seeders[peerKey] = peer
 			} else {
 				// They're a seeder now.. Broken client? Unreported snatch?
-				torrent.Seeders[peerId] = peer
-				delete(torrent.Leechers, peerId)
+				torrent.Seeders[peerKey] = peer
+				delete(torrent.Leechers, peerKey)
 				// completed = true // TODO: not sure if this will result in over-reported snatches
 			}
 		}
@@ -208,9 +209,9 @@ func announce(params *queryParams, user *cdb.User, ip string, db *cdb.Database, 
 		since we still have a reference to their object. After flushing, all references
 		should be gone, allowing the peer to be GC'd.  */
 		if seeding {
-			delete(torrent.Seeders, peerId)
+			delete(torrent.Seeders, peerKey)
 		} else {
-			delete(torrent.Leechers, peerId)
+			delete(torrent.Leechers, peerKey)
 		}
 
 		active = false
@@ -260,7 +261,7 @@ func announce(params *queryParams, user *cdb.User, ip string, db *cdb.Database, 
 	db.RecordTorrent(torrent, deltaSnatch)
 	db.RecordTransferHistory(peer, rawDeltaUpload, rawDeltaDownload, deltaTime, deltaSnatch, active)
 	db.RecordUser(user, rawDeltaUpload, rawDeltaDownload, deltaUpload, deltaDownload)
-	record(peer.TorrentId, peer.UserId, rawDeltaUpload, rawDeltaDownload)
+	record(peer.TorrentId, user.Id, rawDeltaUpload, rawDeltaDownload, uploaded, event, ip)
 
 	if shouldFlushAddr {
 		db.RecordTransferIp(peer)

@@ -42,7 +42,7 @@ func init() {
 	}()
 }
 
-func record(tid, uid uint64, up, down int64) {
+func record(tid, uid uint64, up, down int64, absup uint64, event, ip string) {
 	if up == 0 && down == 0 {
 		return
 	}
@@ -57,7 +57,13 @@ func record(tid, uid uint64, up, down int64) {
 	buf.WriteString(strconv.FormatInt(up, 10))
 	buf.WriteString(",")
 	buf.WriteString(strconv.FormatInt(down, 10))
-	buf.WriteString("]\n")
+	buf.WriteString(",")
+	buf.WriteString(strconv.FormatUint(absup, 10))
+	buf.WriteString(",\"")
+	buf.WriteString(event)
+	buf.WriteString("\",\"")
+	buf.WriteString(ip)
+	buf.WriteString("\"]\n")
 
 	recordChan <- buf.Bytes()
 }
