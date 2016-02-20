@@ -110,13 +110,12 @@ func (db *Database) loadUsers() {
 func (db *Database) loadHitAndRuns() {
 	var err error
 	var count uint
-
-	db.HitAndRunsMutex.Lock()
+	
 	db.mainConn.mutex.Lock()
 	start := time.Now()
 	result := db.mainConn.query(db.loadHnrStmt)
 
-	newHnr := make(map[HitAndRun]bool)
+	newHnr := make(map[UserTorrentPair]struct{})
 
 	row := &rowWrapper{result.MakeRow()}
 
@@ -131,16 +130,17 @@ func (db *Database) loadHitAndRuns() {
 			log.Panicf("Error scanning hit and run rows: %v", err)
 		}
 
-		hnr := HitAndRun{
+		hnr := UserTorrentPair{
 			UserId: row.Uint64(uid),
 			TorrentId: row.Uint64(fid),
 		}
-		newHnr[hnr] = true
+		newHnr[hnr] = struct{}{}
 
 		count++
 	}
 	db.mainConn.mutex.Unlock()
 
+	db.HitAndRunsMutex.Lock()
 	db.HitAndRuns = newHnr
 	db.HitAndRunsMutex.Unlock()
 

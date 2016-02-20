@@ -66,7 +66,7 @@ type User struct {
 	DisableDownload bool
 }
 
-type HitAndRun struct {
+type UserTorrentPair struct {
 	UserId    uint64
 	TorrentId uint64
 }
@@ -92,7 +92,7 @@ type Database struct {
 	Users      map[string]*User // 32 bytes
 	UsersMutex sync.RWMutex
 	
-	HitAndRuns      map[HitAndRun]bool
+	HitAndRuns      map[UserTorrentPair]struct{}
 	HitAndRunsMutex sync.RWMutex
 
 	Torrents      map[string]*Torrent // SHA-1 hash (20 bytes)
@@ -133,7 +133,7 @@ func (db *Database) Init() {
 	db.unPruneTorrentStmt = db.mainConn.prepareStatement("UPDATE torrents SET Status=0 WHERE ID = ?")
 
 	db.Users = make(map[string]*User)
-	db.HitAndRuns = make(map[HitAndRun]bool)
+	db.HitAndRuns = make(map[UserTorrentPair]struct{})
 	db.Torrents = make(map[string]*Torrent)
 	db.Whitelist = make([]string, 0, 100)
 

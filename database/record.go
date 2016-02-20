@@ -67,7 +67,7 @@ func (db *Database) RecordUser(user *User, rawDeltaUpload int64, rawDeltaDownloa
 	db.userChannel <- uq
 }
 
-func (db *Database) RecordTransferHistory(peer *Peer, rawDeltaUpload int64, rawDeltaDownload int64, deltaTime int64, deltaSeedTime int64, deltaSnatch uint64, active bool) {
+func (db *Database) RecordTransferHistory(peer *Peer, rawDeltaUpload, rawDeltaDownload, deltaTime, deltaSeedTime int64, deltaSnatch uint64, active bool) {
 	th := db.bufferPool.Take() // ~110 bytes per record max
 
 	th.WriteString("('")

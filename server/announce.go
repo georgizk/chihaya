@@ -54,6 +54,18 @@ func whitelisted(peerId string, db *cdb.Database) bool {
 	return false
 }
 
+func hasHitAndRun(db *cdb.Database, userId uint64, torrentId uint64) bool {
+	hnr := cdb.UserTorrentPair{
+		UserId: userId,
+		TorrentId: torrentId,
+	}
+
+	db.HitAndRunsMutex.RLock()
+	defer db.HitAndRunsMutex.Unlock()
+	_, exists := db.HitAndRuns[hnr]
+	return exists
+}
+
 func announce(params *queryParams, user *cdb.User, ip string, db *cdb.Database, buf *bytes.Buffer) {
 	var exists bool
 
@@ -123,16 +135,8 @@ func announce(params *queryParams, user *cdb.User, ip string, db *cdb.Database, 
 
 	if left > 0 {
 		if user.DisableDownload {
-			db.HitAndRunsMutex.Lock()
-			defer db.HitAndRunsMutex.Unlock()
-			hnr := cdb.HitAndRun{
-				UserId: user.Id,
-				TorrentId: torrent.Id,
-			}
-
 			// only disable download if the torrent doesn't have a HnR against it
-			_, exists := db.HitAndRuns[hnr]
-			if (!exists) {
+			if !hasHitAndRun(db, user.Id, torrent.Id) {
 				failure("Your download privileges are disabled.", buf)
 				return
 			}
