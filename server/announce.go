@@ -196,8 +196,10 @@ func announce(params *queryParams, user *cdb.User, ip string, db *cdb.Database, 
 	peer.Seeding = seeding
 
 	var deltaTime int64
+	deltaTime = now - peer.LastAnnounce
+	var deltaSeedTime int64
 	if seeding {
-		deltaTime = now - peer.LastAnnounce
+		deltaSeedTime = now - peer.LastAnnounce
 	}
 	peer.LastAnnounce = now
 	torrent.LastAction = now
@@ -259,7 +261,7 @@ func announce(params *queryParams, user *cdb.User, ip string, db *cdb.Database, 
 
 	// If the channels are already full, record* blocks until a flush occurs
 	db.RecordTorrent(torrent, deltaSnatch)
-	db.RecordTransferHistory(peer, rawDeltaUpload, rawDeltaDownload, deltaTime, deltaSnatch, active)
+	db.RecordTransferHistory(peer, rawDeltaUpload, rawDeltaDownload, deltaTime, deltaSeedTime, deltaSnatch, active)
 	db.RecordUser(user, rawDeltaUpload, rawDeltaDownload, deltaUpload, deltaDownload)
 	record(peer.TorrentId, user.Id, rawDeltaUpload, rawDeltaDownload, uploaded, event, ip)
 
