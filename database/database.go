@@ -66,6 +66,11 @@ type User struct {
 	DisableDownload bool
 }
 
+type HitAndRun struct {
+	UserId    uint64
+	TorrentId uint64
+}
+
 type DatabaseConnection struct {
 	sqlDb mysql.Conn
 	mutex sync.Mutex
@@ -77,6 +82,7 @@ type Database struct {
 	mainConn *DatabaseConnection // Used for reloading and misc queries
 
 	loadUsersStmt       mysql.Stmt
+	loadHnrStmt         mysql.Stmt
 	loadTorrentsStmt    mysql.Stmt
 	loadWhitelistStmt   mysql.Stmt
 	loadFreeleechStmt   mysql.Stmt
@@ -85,6 +91,9 @@ type Database struct {
 
 	Users      map[string]*User // 32 bytes
 	UsersMutex sync.RWMutex
+	
+	HitAndRuns      map[HitAndRun]bool
+	HitAndRunsMutex sync.RWMutex
 
 	Torrents      map[string]*Torrent // SHA-1 hash (20 bytes)
 	TorrentsMutex sync.RWMutex
@@ -116,13 +125,15 @@ func (db *Database) Init() {
 	db.bufferPool = util.NewBufferPool(maxBuffers, 128)
 
 	db.loadUsersStmt = db.mainConn.prepareStatement("SELECT ID, torrent_pass, DownMultiplier, UpMultiplier, DisableDownload FROM users_main WHERE Enabled='1'")
-    db.loadTorrentsStmt = db.mainConn.prepareStatement("SELECT t.ID ID, t.info_hash info_hash, (IFNULL(tg.DownMultiplier,1) * t.DownMultiplier) DownMultiplier, (IFNULL(tg.UpMultiplier,1) * t.UpMultiplier) UpMultiplier, t.Snatched Snatched, t.Status Status FROM torrents AS t LEFT JOIN torrent_group_freeleech AS tg ON tg.GroupID=t.GroupID AND (tg.Type=t.TorrentType OR (tg.Type='music' AND t.TorrentType='ost'))")
+	db.loadHnrStmt = db.mainConn.prepareStatement("SELECT uid,fid FROM transfer_history WHERE hnr='1'")
+	db.loadTorrentsStmt = db.mainConn.prepareStatement("SELECT t.ID ID, t.info_hash info_hash, (IFNULL(tg.DownMultiplier,1) * t.DownMultiplier) DownMultiplier, (IFNULL(tg.UpMultiplier,1) * t.UpMultiplier) UpMultiplier, t.Snatched Snatched, t.Status Status FROM torrents AS t LEFT JOIN torrent_group_freeleech AS tg ON tg.GroupID=t.GroupID AND (tg.Type=t.TorrentType OR (tg.Type='music' AND t.TorrentType='ost'))")
 	db.loadWhitelistStmt = db.mainConn.prepareStatement("SELECT peer_id FROM xbt_client_whitelist")
 	db.loadFreeleechStmt = db.mainConn.prepareStatement("SELECT mod_setting FROM mod_core WHERE mod_option='global_freeleech'")
 	db.cleanStalePeersStmt = db.mainConn.prepareStatement("UPDATE transfer_history SET active = '0' WHERE last_announce < ? AND active='1'")
 	db.unPruneTorrentStmt = db.mainConn.prepareStatement("UPDATE torrents SET Status=0 WHERE ID = ?")
 
 	db.Users = make(map[string]*User)
+	db.HitAndRuns = make(map[HitAndRun]bool)
 	db.Torrents = make(map[string]*Torrent)
 	db.Whitelist = make([]string, 0, 100)
 

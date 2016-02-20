@@ -123,8 +123,19 @@ func announce(params *queryParams, user *cdb.User, ip string, db *cdb.Database, 
 
 	if left > 0 {
 		if user.DisableDownload {
-			failure("Your download privileges are disabled.", buf)
-			return
+			db.HitAndRunsMutex.Lock()
+			defer db.HitAndRunsMutex.Unlock()
+			hnr := cdb.HitAndRun{
+				UserId: user.Id,
+				TorrentId: torrent.Id,
+			}
+
+			// only disable download if the torrent doesn't have a HnR against it
+			_, exists := db.HitAndRuns[hnr]
+			if (!exists) {
+				failure("Your download privileges are disabled.", buf)
+				return
+			}
 		}
 		peer, exists = torrent.Leechers[peerKey]
 		if !exists {

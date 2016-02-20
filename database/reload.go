@@ -38,6 +38,7 @@ func (db *Database) startReloading() {
 		for !db.terminate {
 			db.waitGroup.Add(1)
 			db.loadUsers()
+			db.loadHitAndRuns()
 			db.loadTorrents()
 			db.loadConfig()
 
@@ -104,6 +105,46 @@ func (db *Database) loadUsers() {
 	db.UsersMutex.Unlock()
 
 	log.Printf("User load complete (%d rows, %dms)", count, time.Now().Sub(start).Nanoseconds()/1000000)
+}
+
+func (db *Database) loadHitAndRuns() {
+	var err error
+	var count uint
+
+	db.HitAndRunsMutex.Lock()
+	db.mainConn.mutex.Lock()
+	start := time.Now()
+	result := db.mainConn.query(db.loadHnrStmt)
+
+	newHnr := make(map[HitAndRun]bool)
+
+	row := &rowWrapper{result.MakeRow()}
+
+	uid := result.Map("uid")
+	fid := result.Map("fid")
+
+	for {
+		err = result.ScanRow(row.r)
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			log.Panicf("Error scanning hit and run rows: %v", err)
+		}
+
+		hnr := HitAndRun{
+			UserId: row.Uint64(uid),
+			TorrentId: row.Uint64(fid),
+		}
+		newHnr[hnr] = true
+
+		count++
+	}
+	db.mainConn.mutex.Unlock()
+
+	db.HitAndRuns = newHnr
+	db.HitAndRunsMutex.Unlock()
+
+	log.Printf("Hit and run load complete (%d rows, %dms)", count, time.Now().Sub(start).Nanoseconds()/1000000)
 }
 
 func (db *Database) loadTorrents() {
