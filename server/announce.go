@@ -197,9 +197,17 @@ func announce(params *queryParams, user *cdb.User, ip string, db *cdb.Database, 
 
 	var deltaTime int64
 	deltaTime = now - peer.LastAnnounce
+	// too long, set delta to 0
+	if (deltaTime > 2*int64(config.AnnounceInterval.Seconds())) {
+		deltaTime = 0
+	}
 	var deltaSeedTime int64
 	if seeding {
 		deltaSeedTime = now - peer.LastAnnounce
+		// too long, set delta to 0
+		if (deltaSeedTime > 2*int64(config.AnnounceInterval.Seconds())) {
+			deltaSeedTime = 0
+		}
 	}
 	peer.LastAnnounce = now
 	torrent.LastAction = now
