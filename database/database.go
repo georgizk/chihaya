@@ -93,7 +93,6 @@ type Database struct {
 	UsersMutex sync.RWMutex
 	
 	HitAndRuns      map[UserTorrentPair]struct{}
-	HitAndRunsMutex sync.RWMutex
 
 	Torrents      map[string]*Torrent // SHA-1 hash (20 bytes)
 	TorrentsMutex sync.RWMutex

@@ -59,9 +59,6 @@ func hasHitAndRun(db *cdb.Database, userId uint64, torrentId uint64) bool {
 		UserId: userId,
 		TorrentId: torrentId,
 	}
-
-	db.HitAndRunsMutex.RLock()
-	defer db.HitAndRunsMutex.Unlock()
 	_, exists := db.HitAndRuns[hnr]
 	return exists
 }

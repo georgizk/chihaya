@@ -140,9 +140,7 @@ func (db *Database) loadHitAndRuns() {
 	}
 	db.mainConn.mutex.Unlock()
 
-	db.HitAndRunsMutex.Lock()
 	db.HitAndRuns = newHnr
-	db.HitAndRunsMutex.Unlock()
 
 	log.Printf("Hit and run load complete (%d rows, %dms)", count, time.Now().Sub(start).Nanoseconds()/1000000)
 }
