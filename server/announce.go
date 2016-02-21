@@ -54,6 +54,15 @@ func whitelisted(peerId string, db *cdb.Database) bool {
 	return false
 }
 
+func hasHitAndRun(db *cdb.Database, userId uint64, torrentId uint64) bool {
+	hnr := cdb.UserTorrentPair{
+		UserId: userId,
+		TorrentId: torrentId,
+	}
+	_, exists := db.HitAndRuns[hnr]
+	return exists
+}
+
 func announce(params *queryParams, user *cdb.User, ip string, db *cdb.Database, buf *bytes.Buffer) {
 	var exists bool
 
@@ -123,8 +132,11 @@ func announce(params *queryParams, user *cdb.User, ip string, db *cdb.Database, 
 
 	if left > 0 {
 		if user.DisableDownload {
-			failure("Your download privileges are disabled.", buf)
-			return
+			// only disable download if the torrent doesn't have a HnR against it
+			if !hasHitAndRun(db, user.Id, torrent.Id) {
+				failure("Your download privileges are disabled.", buf)
+				return
+			}
 		}
 		peer, exists = torrent.Leechers[peerKey]
 		if !exists {
@@ -196,8 +208,18 @@ func announce(params *queryParams, user *cdb.User, ip string, db *cdb.Database, 
 	peer.Seeding = seeding
 
 	var deltaTime int64
+	deltaTime = now - peer.LastAnnounce
+	// too long, set delta to 0
+	if (deltaTime > 2*int64(config.AnnounceInterval.Seconds())) {
+		deltaTime = 0
+	}
+	var deltaSeedTime int64
 	if seeding {
-		deltaTime = now - peer.LastAnnounce
+		deltaSeedTime = now - peer.LastAnnounce
+		// too long, set delta to 0
+		if (deltaSeedTime > 2*int64(config.AnnounceInterval.Seconds())) {
+			deltaSeedTime = 0
+		}
 	}
 	peer.LastAnnounce = now
 	torrent.LastAction = now
@@ -259,7 +281,7 @@ func announce(params *queryParams, user *cdb.User, ip string, db *cdb.Database, 
 
 	// If the channels are already full, record* blocks until a flush occurs
 	db.RecordTorrent(torrent, deltaSnatch)
-	db.RecordTransferHistory(peer, rawDeltaUpload, rawDeltaDownload, deltaTime, deltaSnatch, active)
+	db.RecordTransferHistory(peer, rawDeltaUpload, rawDeltaDownload, deltaTime, deltaSeedTime, deltaSnatch, active)
 	db.RecordUser(user, rawDeltaUpload, rawDeltaDownload, deltaUpload, deltaDownload)
 	record(peer.TorrentId, user.Id, rawDeltaUpload, rawDeltaDownload, uploaded, event, ip)
 

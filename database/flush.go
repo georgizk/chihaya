@@ -170,7 +170,7 @@ func (db *Database) flushTransferHistory() {
 		query.Reset()
 
 		query.WriteString("INSERT INTO transfer_history (uid, fid, uploaded, downloaded, " +
-			"seeding, starttime, last_announce, seedtime, active, snatched, remaining) VALUES\n")
+			"seeding, starttime, last_announce, activetime, seedtime, active, snatched, remaining) VALUES\n")
 
 		for count = 0; count < length; count++ {
 			b := <-db.transferHistoryChannel
@@ -192,7 +192,8 @@ func (db *Database) flushTransferHistory() {
 		if count > 0 {
 			query.WriteString("\nON DUPLICATE KEY UPDATE uploaded = uploaded + VALUES(uploaded), " +
 				"downloaded = downloaded + VALUES(downloaded), connectable = VALUES(connectable), " +
-				"seeding = VALUES(seeding), seedtime = seedtime + VALUES(seedtime), last_announce = VALUES(last_announce), " +
+				"seeding = VALUES(seeding), activetime = activetime + VALUES(activetime), " +
+				"seedtime = seedtime + VALUES(seedtime), last_announce = VALUES(last_announce), " +
 				"active = VALUES(active), snatched = snatched + VALUES(snatched), remaining = VALUES(remaining);")
 
 			conn.execBuffer(&query)
