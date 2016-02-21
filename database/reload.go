@@ -110,7 +110,7 @@ func (db *Database) loadUsers() {
 func (db *Database) loadHitAndRuns() {
 	var err error
 	var count uint
-	
+
 	db.mainConn.mutex.Lock()
 	start := time.Now()
 	result := db.mainConn.query(db.loadHnrStmt)
@@ -131,7 +131,7 @@ func (db *Database) loadHitAndRuns() {
 		}
 
 		hnr := UserTorrentPair{
-			UserId: row.Uint64(uid),
+			UserId:    row.Uint64(uid),
 			TorrentId: row.Uint64(fid),
 		}
 		newHnr[hnr] = struct{}{}

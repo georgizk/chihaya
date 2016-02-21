@@ -324,7 +324,7 @@ func collectStatistics() {
 	for {
 		time.Sleep(time.Minute)
 		duration := time.Now().Sub(lastTime)
-		handler.throughput = int64(float64(handler.deltaRequests) / duration.Seconds() * 60 + 0.5)
+		handler.throughput = int64(float64(handler.deltaRequests)/duration.Seconds()*60 + 0.5)
 		atomic.StoreInt64(&handler.deltaRequests, 0)
 
 		log.Printf("Throughput: %d rpm\n", handler.throughput)

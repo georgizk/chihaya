@@ -56,7 +56,7 @@ func whitelisted(peerId string, db *cdb.Database) bool {
 
 func hasHitAndRun(db *cdb.Database, userId uint64, torrentId uint64) bool {
 	hnr := cdb.UserTorrentPair{
-		UserId: userId,
+		UserId:    userId,
 		TorrentId: torrentId,
 	}
 	_, exists := db.HitAndRuns[hnr]
@@ -207,20 +207,19 @@ func announce(params *queryParams, user *cdb.User, ip string, db *cdb.Database, 
 	peer.Left = left
 	peer.Seeding = seeding
 
-	var deltaTime int64
-	deltaTime = now - peer.LastAnnounce
-	// too long, set delta to 0
-	if (deltaTime > 2*int64(config.AnnounceInterval.Seconds())) {
+	deltaTime := now - peer.LastAnnounce
+	if deltaTime > 2*int64(config.AnnounceInterval.Seconds()) {
 		deltaTime = 0
 	}
+
 	var deltaSeedTime int64
 	if seeding {
 		deltaSeedTime = now - peer.LastAnnounce
-		// too long, set delta to 0
-		if (deltaSeedTime > 2*int64(config.AnnounceInterval.Seconds())) {
-			deltaSeedTime = 0
-		}
 	}
+	if deltaSeedTime > 2*int64(config.AnnounceInterval.Seconds()) {
+		deltaSeedTime = 0
+	}
+
 	peer.LastAnnounce = now
 	torrent.LastAction = now
 

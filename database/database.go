@@ -60,9 +60,9 @@ type Torrent struct {
 }
 
 type User struct {
-	Id             uint64
-	UpMultiplier   float64
-	DownMultiplier float64
+	Id              uint64
+	UpMultiplier    float64
+	DownMultiplier  float64
 	DisableDownload bool
 }
 
@@ -91,8 +91,8 @@ type Database struct {
 
 	Users      map[string]*User // 32 bytes
 	UsersMutex sync.RWMutex
-	
-	HitAndRuns      map[UserTorrentPair]struct{}
+
+	HitAndRuns map[UserTorrentPair]struct{}
 
 	Torrents      map[string]*Torrent // SHA-1 hash (20 bytes)
 	TorrentsMutex sync.RWMutex
@@ -100,11 +100,11 @@ type Database struct {
 	Whitelist      []string
 	WhitelistMutex sync.RWMutex
 
-	torrentChannel          chan *bytes.Buffer
-	userChannel             chan *bytes.Buffer
-	transferHistoryChannel  chan *bytes.Buffer
-	transferIpsChannel      chan *bytes.Buffer
-	snatchChannel           chan *bytes.Buffer
+	torrentChannel         chan *bytes.Buffer
+	userChannel            chan *bytes.Buffer
+	transferHistoryChannel chan *bytes.Buffer
+	transferIpsChannel     chan *bytes.Buffer
+	snatchChannel          chan *bytes.Buffer
 
 	waitGroup                sync.WaitGroup
 	transferHistoryWaitGroup sync.WaitGroup

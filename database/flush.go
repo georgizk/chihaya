@@ -364,4 +364,3 @@ func (db *Database) purgeInactivePeers() {
 		time.Sleep(config.PurgeInactiveInterval)
 	}
 }
-
