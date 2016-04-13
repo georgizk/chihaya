@@ -134,7 +134,7 @@ func (db *Database) Init() {
 	db.Users = make(map[string]*User)
 	db.HitAndRuns = make(map[UserTorrentPair]struct{})
 	db.Torrents = make(map[string]*Torrent)
-	db.Whitelist = make([]string, 0, 100)
+	db.Whitelist = []string{}
 
 	db.deserialize()
 

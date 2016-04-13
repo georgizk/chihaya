@@ -220,9 +220,6 @@ func (db *Database) loadConfig() {
 }
 
 func (db *Database) loadWhitelist() {
-	var err error
-	var count int
-
 	db.WhitelistMutex.Lock()
 	db.mainConn.mutex.Lock()
 	start := time.Now()
@@ -230,28 +227,19 @@ func (db *Database) loadWhitelist() {
 
 	row := result.MakeRow()
 
-	db.Whitelist = db.Whitelist[0:1] // Effectively clear the whitelist
+	db.Whitelist = nil
 
 	for {
-		err = result.ScanRow(row)
+		err := result.ScanRow(row)
 		if err == io.EOF {
 			break
 		} else if err != nil {
 			log.Panicf("Error scanning whitelist rows: %v", err)
 		}
-		if count >= cap(db.Whitelist) {
-			newSlice := make([]string, count, count*2)
-			copy(newSlice, db.Whitelist)
-			db.Whitelist = newSlice
-		} else if count >= len(db.Whitelist) {
-			db.Whitelist = db.Whitelist[0 : count+1]
-		}
-		db.Whitelist[count] = row.Str(0)
-		count++
+		db.Whitelist = append(db.Whitelist, row.Str(0))
 	}
 	db.mainConn.mutex.Unlock()
-
 	db.WhitelistMutex.Unlock()
 
-	log.Printf("Whitelist load complete (%d rows, %dms)", count, time.Now().Sub(start).Nanoseconds()/1000000)
+	log.Printf("Whitelist load complete (%d rows, %dms)", len(db.Whitelist), time.Now().Sub(start).Nanoseconds()/1000000)
 }
