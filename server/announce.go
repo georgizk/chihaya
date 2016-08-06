@@ -22,8 +22,10 @@ import (
 	"chihaya/config"
 	cdb "chihaya/database"
 	"chihaya/util"
+	"encoding/binary"
 	"fmt"
 	"log"
+	"net"
 	"strconv"
 	"time"
 )
@@ -47,7 +49,7 @@ func whitelisted(peerId string, db *cdb.Database) uint32 {
 				}
 			}
 			if matched {
-				return id 
+				return id
 			}
 		}
 	}
@@ -63,7 +65,7 @@ func hasHitAndRun(db *cdb.Database, userId uint64, torrentId uint64) bool {
 	return exists
 }
 
-func announce(params *queryParams, user *cdb.User, ipAddr string, ip uint32, db *cdb.Database, buf *bytes.Buffer) {
+func announce(params *queryParams, user *cdb.User, ipAddr string, db *cdb.Database, buf *bytes.Buffer) {
 	var exists bool
 
 	// Mandatory parameters
@@ -245,37 +247,26 @@ func announce(params *queryParams, user *cdb.User, ipAddr string, ip uint32, db 
 	 * Generate compact ip/port
 	 * Future TODO: possible IPv6 support
 	 */
-	peer.Addr = []byte{0, 0, 0, 0, 0, 0}
-	peer.Port = uint(port)
-	peer.IpAddr = ipAddr
-	peer.Ip = ip
-	peer.ClientId = client_id
-	var val byte
-	val = 0
-	k := 0
-	for i := 0; i < len(ipAddr); i++ {
-		if ipAddr[i] == '.' {
-			if k > 2 {
-				failure("Malformed IP address", buf)
-				return
-			}
-			peer.Addr[k] = val
-			val = 0
-			k++
-		} else if ipAddr[i] >= '0' && ipAddr[i] <= '9' {
-			val = val*10 + ipAddr[i] - '0'
-		} else {
-			failure("IPv4 address required (sorry!)", buf)
-			return
-		}
-	}
-	if k != 3 {
+	ipBytes := net.ParseIP(ipAddr)
+	if nil == ipBytes {
 		failure("Malformed IP address", buf)
 		return
 	}
-	peer.Addr[3] = val
-	peer.Addr[4] = byte(port >> 8)
-	peer.Addr[5] = byte(port & 0xff)
+
+	ipBytes = ipBytes.To4()
+	if nil == ipBytes {
+		failure("IPv4 address required (sorry!)", buf)
+		return
+	}
+
+	// convers in a way equivalent to PHP's ip2long
+	ipLong := binary.BigEndian.Uint32(ipBytes)
+
+	peer.Addr = []byte{ipBytes[0], ipBytes[1], ipBytes[2], ipBytes[3], byte(port >> 8), byte(port & 0xff)}
+	peer.Port = uint(port)
+	peer.IpAddr = ipAddr
+	peer.Ip = ipLong
+	peer.ClientId = client_id
 
 	// If the channels are already full, record* blocks until a flush occurs
 	db.RecordTorrent(torrent, deltaSnatch)

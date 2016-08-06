@@ -34,10 +34,10 @@ type Peer struct {
 	UserId    uint64
 	TorrentId uint64
 
-	Port      uint
-	IpAddr    string
-	Ip        uint32
-	Addr      []byte
+	Port   uint
+	IpAddr string
+	Ip     uint32
+	Addr   []byte
 
 	Uploaded   uint64
 	Downloaded uint64
