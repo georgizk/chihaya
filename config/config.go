@@ -54,7 +54,7 @@ var (
 	TorrentFlushBufferSize         = 10000
 	UserFlushBufferSize            = 10000
 	TransferHistoryFlushBufferSize = 10000
-	TransferIpsFlushBufferSize     = 1000
+	TransferIpsFlushBufferSize     = 10000
 	SnatchFlushBufferSize          = 100
 )
 

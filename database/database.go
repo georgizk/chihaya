@@ -30,7 +30,7 @@ import (
 
 type Peer struct {
 	Id        string
-	ClientId  uint
+	ClientId  uint32
 	UserId    uint64
 	TorrentId uint64
 
@@ -99,7 +99,7 @@ type Database struct {
 	Torrents      map[string]*Torrent // SHA-1 hash (20 bytes)
 	TorrentsMutex sync.RWMutex
 
-	Whitelist      []string
+	Whitelist      map[uint32]string
 	WhitelistMutex sync.RWMutex
 
 	torrentChannel         chan *bytes.Buffer
@@ -128,7 +128,7 @@ func (db *Database) Init() {
 	db.loadUsersStmt = db.mainConn.prepareStatement("SELECT ID, torrent_pass, DownMultiplier, UpMultiplier, DisableDownload FROM users_main WHERE Enabled='1'")
 	db.loadHnrStmt = db.mainConn.prepareStatement("SELECT h.uid,h.fid FROM transfer_history AS h JOIN users_main AS u ON u.ID = h.uid WHERE hnr='1' AND Enabled='1'")
 	db.loadTorrentsStmt = db.mainConn.prepareStatement("SELECT t.ID ID, t.info_hash info_hash, (IFNULL(tg.DownMultiplier,1) * t.DownMultiplier) DownMultiplier, (IFNULL(tg.UpMultiplier,1) * t.UpMultiplier) UpMultiplier, t.Snatched Snatched, t.Status Status FROM torrents AS t LEFT JOIN torrent_group_freeleech AS tg ON tg.GroupID=t.GroupID AND (tg.Type=t.TorrentType OR (tg.Type='music' AND t.TorrentType='ost'))")
-	db.loadWhitelistStmt = db.mainConn.prepareStatement("SELECT peer_id FROM xbt_client_whitelist")
+	db.loadWhitelistStmt = db.mainConn.prepareStatement("SELECT id, peer_id FROM xbt_client_whitelist")
 	db.loadFreeleechStmt = db.mainConn.prepareStatement("SELECT mod_setting FROM mod_core WHERE mod_option='global_freeleech'")
 	db.cleanStalePeersStmt = db.mainConn.prepareStatement("UPDATE transfer_history SET active = '0' WHERE last_announce < ? AND active='1'")
 	db.unPruneTorrentStmt = db.mainConn.prepareStatement("UPDATE torrents SET Status=0 WHERE ID = ?")
@@ -136,7 +136,7 @@ func (db *Database) Init() {
 	db.Users = make(map[string]*User)
 	db.HitAndRuns = make(map[UserTorrentPair]struct{})
 	db.Torrents = make(map[string]*Torrent)
-	db.Whitelist = []string{}
+	db.Whitelist = make(map[uint32]string)
 
 	db.deserialize()
 

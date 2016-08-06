@@ -28,7 +28,7 @@ import (
 	"time"
 )
 
-func whitelisted(peerId string, db *cdb.Database) bool {
+func whitelisted(peerId string, db *cdb.Database) uint32 {
 	db.WhitelistMutex.RLock()
 	defer db.WhitelistMutex.RUnlock()
 
@@ -36,7 +36,7 @@ func whitelisted(peerId string, db *cdb.Database) bool {
 	var i int
 	var matched bool
 
-	for _, whitelistedId := range db.Whitelist {
+	for id, whitelistedId := range db.Whitelist {
 		widLen = len(whitelistedId)
 		if widLen <= len(peerId) {
 			matched = true
@@ -47,11 +47,11 @@ func whitelisted(peerId string, db *cdb.Database) bool {
 				}
 			}
 			if matched {
-				return true
+				return id 
 			}
 		}
 	}
-	return false
+	return 0
 }
 
 func hasHitAndRun(db *cdb.Database, userId uint64, torrentId uint64) bool {
@@ -79,7 +79,8 @@ func announce(params *queryParams, user *cdb.User, ipAddr string, ip uint32, db 
 		return
 	}
 
-	if !whitelisted(peerId, db) {
+        client_id := whitelisted(peerId, db)
+	if 0 == client_id {
 		failure("Your client is not approved", buf)
 		return
 	}
@@ -248,6 +249,7 @@ func announce(params *queryParams, user *cdb.User, ipAddr string, ip uint32, db 
 	peer.Port = uint(port)
 	peer.IpAddr = ipAddr
 	peer.Ip = ip
+        peer.ClientId = client_id
 	var val byte
 	val = 0
 	k := 0
