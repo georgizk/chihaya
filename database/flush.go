@@ -225,7 +225,7 @@ func (db *Database) flushTransferIps() {
 		length := util.Max(1, len(db.transferIpsChannel))
 		query.Reset()
 
-		query.WriteString("INSERT INTO transfer_ips (uid, fid, peer_id, starttime, ip, port) VALUES\n")
+		query.WriteString("INSERT INTO transfer_ips (uid, fid, client_id, ip, uploaded, downloaded, starttime, last_announce) VALUES\n")
 
 		for count = 0; count < length; count++ {
 			b := <-db.transferIpsChannel
@@ -245,7 +245,7 @@ func (db *Database) flushTransferIps() {
 		}
 
 		if count > 0 {
-			query.WriteString("\nON DUPLICATE KEY UPDATE ip = VALUES(ip), port = VALUES(port);")
+			query.WriteString("\nON DUPLICATE KEY UPDATE downloaded = downloaded + VALUES(ip), uploaded = uploaded + VALUES(uploaded), last_announce = VALUES(last_announce);")
 
 			conn.execBuffer(&query)
 

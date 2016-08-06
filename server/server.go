@@ -32,6 +32,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"encoding/binary"
 )
 
 type httpHandler struct {
@@ -173,13 +174,13 @@ func (handler *httpHandler) respond(r *http.Request, buf *bytes.Buffer) {
 		return
 	}
 
-	ip, exists := params.get("ip")
+	ipAddr, exists := params.get("ip")
 	if !exists {
-		ip, exists = params.get("ipv4")
+		ipAddr, exists = params.get("ipv4")
 		if !exists {
 			ips, exists := r.Header["X-Real-Ip"]
 			if exists && len(ips) > 0 {
-				ip = ips[0]
+				ipAddr = ips[0]
 			} else {
 				portIndex := len(r.RemoteAddr) - 1
 				for ; portIndex >= 0; portIndex-- {
@@ -188,7 +189,7 @@ func (handler *httpHandler) respond(r *http.Request, buf *bytes.Buffer) {
 					}
 				}
 				if portIndex != -1 {
-					ip = r.RemoteAddr[0:portIndex]
+					ipAddr = r.RemoteAddr[0:portIndex]
 				} else {
 					failure("Failed to parse IP address", buf)
 					return
@@ -196,10 +197,18 @@ func (handler *httpHandler) respond(r *http.Request, buf *bytes.Buffer) {
 			}
 		}
 	}
+	
+	ip := net.ParseIP(ipAddr)
+	if ip == nil {
+		failure("Malformed IP address", buf)
+		return
+	}
+	ip = ip.To4()
+	ip = binary.BigEndian.Uint32(ip)
 
 	switch action {
 	case "announce":
-		announce(params, user, ip, handler.db, buf)
+		announce(params, user, ipAddr, ip, handler.db, buf)
 		return
 	case "scrape":
 		scrape(params, handler.db, buf)

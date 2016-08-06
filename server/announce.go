@@ -63,7 +63,7 @@ func hasHitAndRun(db *cdb.Database, userId uint64, torrentId uint64) bool {
 	return exists
 }
 
-func announce(params *queryParams, user *cdb.User, ip string, db *cdb.Database, buf *bytes.Buffer) {
+func announce(params *queryParams, user *cdb.User, ipAddr string, ip uint32, db *cdb.Database, buf *bytes.Buffer) {
 	var exists bool
 
 	// Mandatory parameters
@@ -245,48 +245,43 @@ func announce(params *queryParams, user *cdb.User, ip string, db *cdb.Database, 
 	 * Generate compact ip/port
 	 * Future TODO: possible IPv6 support
 	 */
-	if active && ip != peer.Ip || uint(port) != peer.Port {
-		peer.Addr = []byte{0, 0, 0, 0, 0, 0}
-		peer.Port = uint(port)
-		peer.Ip = ip
-		var val byte
-		val = 0
-		k := 0
-		for i := 0; i < len(ip); i++ {
-			if ip[i] == '.' {
-				if k > 2 {
-					failure("Malformed IP address", buf)
-					return
-				}
-				peer.Addr[k] = val
-				val = 0
-				k++
-			} else if ip[i] >= '0' && ip[i] <= '9' {
-				val = val*10 + ip[i] - '0'
-			} else {
-				failure("IPv4 address required (sorry!)", buf)
+	peer.Addr = []byte{0, 0, 0, 0, 0, 0}
+	peer.Port = uint(port)
+	peer.IpAddr = ipAddr
+	peer.Ip = ip
+	var val byte
+	val = 0
+	k := 0
+	for i := 0; i < len(ipAddr); i++ {
+		if ipAddr[i] == '.' {
+			if k > 2 {
+				failure("Malformed IP address", buf)
 				return
 			}
-		}
-		if k != 3 {
-			failure("Malformed IP address", buf)
+			peer.Addr[k] = val
+			val = 0
+			k++
+		} else if ipAddr[i] >= '0' && ipAddr[i] <= '9' {
+			val = val*10 + ipAddr[i] - '0'
+		} else {
+			failure("IPv4 address required (sorry!)", buf)
 			return
 		}
-		peer.Addr[3] = val
-		peer.Addr[4] = byte(port >> 8)
-		peer.Addr[5] = byte(port & 0xff)
-		shouldFlushAddr = true
 	}
+	if k != 3 {
+		failure("Malformed IP address", buf)
+		return
+	}
+	peer.Addr[3] = val
+	peer.Addr[4] = byte(port >> 8)
+	peer.Addr[5] = byte(port & 0xff)
 
 	// If the channels are already full, record* blocks until a flush occurs
 	db.RecordTorrent(torrent, deltaSnatch)
 	db.RecordTransferHistory(peer, rawDeltaUpload, rawDeltaDownload, deltaTime, deltaSeedTime, deltaSnatch, active)
 	db.RecordUser(user, rawDeltaUpload, rawDeltaDownload, deltaUpload, deltaDownload)
-	record(peer.TorrentId, user.Id, rawDeltaUpload, rawDeltaDownload, uploaded, event, ip)
-
-	if shouldFlushAddr {
-		db.RecordTransferIp(peer)
-	}
+	record(peer.TorrentId, user.Id, rawDeltaUpload, rawDeltaDownload, uploaded, event, ipAddr)
+	db.RecordTransferIp(peer, rawDeltaUpload, rawDeltaDownload)
 
 	// Generate response
 	seedCount := len(torrent.Seeders)
@@ -370,7 +365,7 @@ func announce(params *queryParams, user *cdb.User, ip string, db *cdb.Database, 
 			for _, other := range peersToSend {
 				buf.WriteRune('d')
 				util.Bencode("ip", buf)
-				util.Bencode(other.Ip, buf)
+				util.Bencode(other.ipAddr, buf)
 				util.Bencode("peer id", buf)
 				util.Bencode(other.Id, buf)
 				util.Bencode("port", buf)

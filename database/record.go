@@ -99,21 +99,27 @@ func (db *Database) RecordTransferHistory(peer *Peer, rawDeltaUpload, rawDeltaDo
 	db.transferHistoryChannel <- th
 }
 
-func (db *Database) RecordTransferIp(peer *Peer) {
-	ti := db.bufferPool.Take() // ~95 bytes per record max
+func (db *Database) RecordTransferIp(peer *Peer, rawDeltaUpload int64, rawDeltaDownload int64) {
+	ti := db.bufferPool.Take() // ~40 bytes per record max
 
+	// used with:
+	// INSERT INTO transfer_ips (uid, fid, client_id, ip, uploaded, downloaded, starttime, last_announce)
 	ti.WriteString("('")
 	ti.WriteString(strconv.FormatUint(peer.UserId, 10))
 	ti.WriteString("','")
 	ti.WriteString(strconv.FormatUint(peer.TorrentId, 10))
 	ti.WriteString("','")
-	ti.WriteString(base64.StdEncoding.EncodeToString([]byte(peer.Id))) // ~30 bytes
+	ti.WriteString(strconv.FormatUint(peer.ClientId, 10))
 	ti.WriteString("','")
-	ti.WriteString(strconv.FormatInt(peer.StartTime, 10))
+	ti.WriteString(strconv.FormatUint(peer.Ip, 10))
 	ti.WriteString("','")
-	ti.WriteString(peer.Ip)
+	ti.WriteString(strconv.FormatInt(rawDeltaUpload, 10))
 	ti.WriteString("','")
-	ti.WriteString(strconv.FormatUint(uint64(peer.Port), 10))
+	ti.WriteString(strconv.FormatInt(rawDeltaDownload, 10))
+	ti.WriteString("','")
+	th.WriteString(strconv.FormatInt(peer.StartTime, 10))
+	ti.WriteString("','")
+	th.WriteString(strconv.FormatInt(peer.LastAnnounce, 10))
 	ti.WriteString("')")
 
 	db.transferIpsChannel <- ti

@@ -30,12 +30,14 @@ import (
 
 type Peer struct {
 	Id        string
+	ClientId  uint
 	UserId    uint64
 	TorrentId uint64
 
-	Port uint
-	Ip   string
-	Addr []byte
+	Port      uint
+	IpAddr    string
+	Ip        uint32
+	Addr      []byte
 
 	Uploaded   uint64
 	Downloaded uint64
