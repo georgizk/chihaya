@@ -245,8 +245,7 @@ func (db *Database) flushTransferIps() {
 		}
 
 		if count > 0 {
-			query.WriteString("\nON DUPLICATE KEY UPDATE downloaded = downloaded + VALUES(ip), uploaded = uploaded + VALUES(uploaded), last_announce = VALUES(last_announce);")
-
+			query.WriteString("\nON DUPLICATE KEY UPDATE downloaded = downloaded + VALUES(downloaded), uploaded = uploaded + VALUES(uploaded), last_announce = VALUES(last_announce);")
 			conn.execBuffer(&query)
 
 			if length < (config.TransferIpsFlushBufferSize >> 1) {

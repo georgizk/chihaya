@@ -230,7 +230,7 @@ func (db *Database) loadWhitelist() {
 	id := result.Map("id")
 	peer_id := result.Map("peer_id")
 
-	db.Whitelist = nil
+	db.Whitelist = make(map[uint32]string) 
 
 	for {
 		err := result.ScanRow(row)
