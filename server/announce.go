@@ -79,7 +79,7 @@ func announce(params *queryParams, user *cdb.User, ipAddr string, ip uint32, db 
 		return
 	}
 
-        client_id := whitelisted(peerId, db)
+	client_id := whitelisted(peerId, db)
 	if 0 == client_id {
 		failure("Your client is not approved", buf)
 		return
@@ -249,7 +249,7 @@ func announce(params *queryParams, user *cdb.User, ipAddr string, ip uint32, db 
 	peer.Port = uint(port)
 	peer.IpAddr = ipAddr
 	peer.Ip = ip
-        peer.ClientId = client_id
+	peer.ClientId = client_id
 	var val byte
 	val = 0
 	k := 0

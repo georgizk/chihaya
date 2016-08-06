@@ -227,8 +227,8 @@ func (db *Database) loadWhitelist() {
 
 	row := result.MakeRow()
 
-        id := result.Map("id")
-        peer_id := result.Map("peer_id")
+	id := result.Map("id")
+	peer_id := result.Map("peer_id")
 
 	db.Whitelist = nil
 
