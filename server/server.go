@@ -204,11 +204,10 @@ func (handler *httpHandler) respond(r *http.Request, buf *bytes.Buffer) {
 		return
 	}
 	ip = ip.To4()
-	ip = binary.BigEndian.Uint32(ip)
 
 	switch action {
 	case "announce":
-		announce(params, user, ipAddr, ip, handler.db, buf)
+		announce(params, user, ipAddr, binary.BigEndian.Uint32(ip), handler.db, buf)
 		return
 	case "scrape":
 		scrape(params, handler.db, buf)

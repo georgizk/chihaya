@@ -107,7 +107,6 @@ func announce(params *queryParams, user *cdb.User, ipAddr string, ip uint32, db 
 
 	// Optional parameters
 	event, _ := params.get("event")
-	shouldFlushAddr := false
 
 	var numWantStr string
 	var numWant int
@@ -365,7 +364,7 @@ func announce(params *queryParams, user *cdb.User, ipAddr string, ip uint32, db 
 			for _, other := range peersToSend {
 				buf.WriteRune('d')
 				util.Bencode("ip", buf)
-				util.Bencode(other.ipAddr, buf)
+				util.Bencode(other.IpAddr, buf)
 				util.Bencode("peer id", buf)
 				util.Bencode(other.Id, buf)
 				util.Bencode("port", buf)

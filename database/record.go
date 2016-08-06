@@ -19,7 +19,6 @@ package database
 
 import (
 	"chihaya/util"
-	"encoding/base64"
 	"strconv"
 )
 
@@ -109,17 +108,17 @@ func (db *Database) RecordTransferIp(peer *Peer, rawDeltaUpload int64, rawDeltaD
 	ti.WriteString("','")
 	ti.WriteString(strconv.FormatUint(peer.TorrentId, 10))
 	ti.WriteString("','")
-	ti.WriteString(strconv.FormatUint(peer.ClientId, 10))
+	ti.WriteString(strconv.FormatUint(uint64(peer.ClientId), 10))
 	ti.WriteString("','")
-	ti.WriteString(strconv.FormatUint(peer.Ip, 10))
+	ti.WriteString(strconv.FormatUint(uint64(peer.Ip), 10))
 	ti.WriteString("','")
 	ti.WriteString(strconv.FormatInt(rawDeltaUpload, 10))
 	ti.WriteString("','")
 	ti.WriteString(strconv.FormatInt(rawDeltaDownload, 10))
 	ti.WriteString("','")
-	th.WriteString(strconv.FormatInt(peer.StartTime, 10))
+	ti.WriteString(strconv.FormatInt(peer.StartTime, 10))
 	ti.WriteString("','")
-	th.WriteString(strconv.FormatInt(peer.LastAnnounce, 10))
+	ti.WriteString(strconv.FormatInt(peer.LastAnnounce, 10))
 	ti.WriteString("')")
 
 	db.transferIpsChannel <- ti
